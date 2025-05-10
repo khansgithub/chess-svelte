@@ -54,7 +54,7 @@
 
 {#snippet piece(square : Piece | Empty)}
     {#if isPiece(square)}
-        <!-- <div class="piece {(square as Piece).colour}-piece"></div> -->
+        <div class="piece {(square as Piece).colour}-piece"></div>
         <p>{(square as Piece).piece_type.name}</p>
         <!-- <p>{(square as Piece).position}</p> -->
     {:else}
