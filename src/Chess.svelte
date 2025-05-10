@@ -1,89 +1,98 @@
 <script lang="ts">
-    import { Empty, Grid } from "./modules/grid";
-    import { dn_to_xy, xy_to_dn } from "./modules/grid_util";
-    import { Piece } from "./modules/pieces";
-    import { type XY, type DN, identify } from "./modules/shared";
-
-    const log = console.log;
+    import { writable, type Writable } from 'svelte/store';
+    import { Empty, Grid } from "./modules/grid.svelte";
+    import { dn_to_xy, isError, xy_to_dn } from "./modules/grid_util";
+    import { Bishop, isPiece, Pawn, Piece, Rook } from "./modules/pieces";
+    import { type XY, type DN, identify, WHITE } from "./modules/shared";
 
     const g = new Grid();
-    const _grid = g.get_grid();
+    const pawns: Pawn[] = g.WHITE_SIDE.PAWNS as Pawn[];
+    const rook = (g.WHITE_SIDE.ROOK_L as Rook);
+    const bishop = (g.WHITE_SIDE.BISHOP_L as Bishop);
+    g.move_piece(bishop, "d5" as DN);
 
-    const grid_keys = Array.from(_grid.keys());
+    function toggle_show_attack_squares(e: Event){
+        try{
+            if(e instanceof KeyboardEvent) if(!["Enter", " "].includes(e.key)) return;
 
-    function get_piece_type(xy: XY): string {
-        const dn = xy_to_dn(xy);
-        if (!dn) {
-            console.error("could not get dn of xy value: ", xy);
-            return "error";
+            const target = e.currentTarget as HTMLElement | null;
+            if (target === null) return;
+            
+            let dn = xy_to_dn(target.id as XY);
+            if(isError(dn)) throw new Error(dn.message);
+            
+            const piece = g.get(dn);
+            if(!isPiece(piece)) return;
+            
+            g.toggle_attack_squares(piece, piece.selected);
+            target.classList.toggle("selected")
+            piece.selected =! piece.selected;
+        } catch (e){
+            console.trace(e)
         }
-        const square = g.get(dn);
-        function isPiece(f: Piece | Empty): f is Piece {
-            return (f as Piece).piece_type !== undefined;
-        }
-
-        if (!identify<Piece>(square, "piece_type")) return "";
-        return square.piece_type.name;
-        // console.log(piece_name);
-        // return piece_name;
     }
 
-    function foo(x: number, y: number) {
-        let r = "";
-        if (x % 2) {
-            if (y % 2) {
-                r = "black";
-            } else {
-                r = "white";
-            }
-        } else {
-            if (y - (1 % 2)) {
-                r = "black";
-            } else {
-                r = "white";
-            }
-        }
-        console.log(x, y, ": ", "x mod: ", x % 2, "y mod :", y % 2);
-        console.log(r);
-        return r; 
-    }
-
-    log(grid_keys);
 </script>
 
 <div class="board">
     {#each Array(8) as _, x}
         {#each Array(8) as _, y}
-            <!-- <div class="cell {(i ^ (i >> 3)) & 1 ? 'white' : 'black'}-cell" id={xy}> -->
-            <div class="cell {foo(x, y)}-cell">
-                <p>{x}, {y}</p>
-                <!-- {g.get(xy_to_dn(`${y + 1},${8 - x}` as XY) as DN)} -->
+            <div
+            class="cell {x&1 ^ y&1 ? 'black' : 'white' }-cell"
+            id="{y + 1},{8 - x}"
+            onclick={toggle_show_attack_squares}
+            onkeydown={toggle_show_attack_squares}
+            role="button"
+            tabindex="0"
+            >
+                <p>{`${y + 1},${8 - x}`}</p>
+                {@render piece(g.get(xy_to_dn(`${y + 1},${8 - x}` as XY) as DN))}
             </div>
         {/each}
     {/each}
 </div>
 
+{#snippet piece(square : Piece | Empty)}
+    {#if isPiece(square)}
+        <!-- <div class="piece {(square as Piece).colour}-piece"></div> -->
+        <p>{(square as Piece).piece_type.name}</p>
+        <!-- <p>{(square as Piece).position}</p> -->
+    {:else}
+        <div class="{square.is_marked() ? 'mark' : null}"></div>
+    {/if}
+{/snippet}
+
 <style>
     .board {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
         /* width: 100%; */
-        height: 100%;
         aspect-ratio: 1/1;
         background-color: black;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        height: 100%;
     }
 
     .cell {
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        -webkit-user-select: none; /* Safari */
         /* width: 100%; */
-        display: flex;
+        align-items: center;
+        aspect-ratio: 1/1;
         background-color: lightblue;
         color: black;
+        display: flex;
+        flex-direction: column;
+        font-size: clamp(1px, 1rem, 2rem);
+        justify-content: center;
+        overflow: hidden;
         text-align: center;
-        /* aspect-ratio: 1/1; */
+        user-select: none; /* Standard syntax */
+        /* box-sizing: border-box; */
     }
 
-    .cell > * {
-        margin: auto auto auto auto;
+    /* hack for svelte to not purge this rule */
+    :global(.selected){
+        box-shadow: inset 0px 0px 40px 4px #888888;
     }
 
     .white-cell {
@@ -92,5 +101,26 @@
 
     .black-cell {
         background-color: darkgray;
+    }
+
+    .piece{
+        aspect-ratio: 1/1;
+        height: 50%;
+    }
+
+    .white-piece {
+        background-color: white;
+        border: 1px solid black;
+    }
+
+    .black-piece {
+        background-color: black;
+        border: 1px solid black;
+    }
+
+    .mark{
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255,0,0,0.3);
     }
 </style>

@@ -1,12 +1,29 @@
 import { SLIDE, JUMP, WHITE, BLACK, PieceNames, type COLOUR, type VECTOR_TYPE, type DN, type XY } from './shared';
-import { Piece, Rook, Pawn, Bishop } from './pieces';
-import { xy_to_dn, dn_to_xy, dn_to_xy_arr, } from './grid_util';
+import { Piece, Rook, Pawn, Bishop, isPiece } from './pieces';
+import { xy_to_dn, dn_to_xy, dn_to_xy_arr, isError, } from './grid_util';
 class Empty {
-    private _mark: boolean = false;
+    // private _mark: boolean = false;
+    public _mark = $state(false);
+    public mark_count = $state(0);
+    
+    public mark_or_unmark(args:{mark?: boolean, unmark?: boolean}){
+        if (args.mark === undefined && args.unmark === undefined) {
+            throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
+        }
 
-    public mark_square() { this._mark = true };
-    public unmark_square() { this._mark = false };
-    public is_marked(): boolean { return !!this._mark };
+        if (args.unmark === undefined) {
+            return args.mark ? this.mark_square() : this.unmark_square();
+        }
+    
+        if (args.mark === undefined) {
+            return args.unmark ? this.unmark_square() : this.mark_square();
+        }
+        throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
+    
+    }
+    public mark_square() { this.mark_count++ };
+    public unmark_square() { this.mark_count-- };
+    public is_marked(): boolean { return this.mark_count > 0; };
 
     public toString(): string {
         return this._mark ? "X" : " ";
@@ -18,7 +35,6 @@ class Grid {
 
     public WHITE_SIDE = this._side(WHITE);
     public BLACK_SIDE = this._side(BLACK);
-
     constructor() {
         for (let x = 1; x <= 8; x++) {
             for (let y = 1; y <= 8; y++) {
@@ -47,7 +63,7 @@ class Grid {
                 }
 
                 let coor: XY = `${x},${y}` as XY;
-                if (square instanceof Piece) square.position = coor;
+                if (isPiece(square)) square.position = coor;
                 this._grid.set(coor, square);
             }
         }
@@ -55,19 +71,21 @@ class Grid {
 
     public move(notation: string) {
         //TODO
-        throw("Not implemented");
+        throw new Error("Not implemented");
         if (notation.length == 2) {
             // move pawn
         }
     }
 
-    public get_grid(): typeof this._grid{
+    public get get_grid(): typeof this._grid{
         return this._grid;
     }
 
     public move_piece(p: Piece, pos: DN) {
-        let [x, y] = dn_to_xy_arr(pos);
-        if (x === null || y === null) throw (`Invalid move: ${pos}, ${[x, y]}`);
+        let arr = dn_to_xy_arr(pos);
+        if (isError(arr)) throw new Error(arr.message);
+        let [x, y] = arr;
+        if (x === null || y === null) throw new Error(`Invalid move: ${pos}, ${[x, y]}`);
         let new_pos: XY = `${x},${y}` as XY;
         this._grid.set(p.position, new Empty());
         this._grid.set(new_pos, p);
@@ -89,41 +107,32 @@ class Grid {
     }
 
     public get(dn: DN): Piece | Empty {
-        let square = this._grid.get(dn_to_xy(dn) ?? "" as XY);
-        if (square === undefined) throw ("Invalid square: " + dn);
+        let xy = dn_to_xy(dn);
+        if(isError(xy)) throw new Error(xy.message);
+        let square = this._grid.get(xy);
+        if (square === undefined) throw new Error("Invalid square: " + dn);
         return square;
     }
 
-    public mark_attack_squares(attack_squares: { [key: string]: XY[] } | DN[], vector_type: VECTOR_TYPE) {
-        if (vector_type === SLIDE) {
-            const a_s = attack_squares as { [key: string]: XY[] };
-            Object.keys(a_s).forEach(vector_name => {
-                let skip_vector = false;
-                a_s[vector_name].forEach(s => {
-                    if (skip_vector) return;
-                    let square = this.get(xy_to_dn(s) ?? "" as DN);
-                    if (square instanceof Empty) {
-                        square.mark_square();
-                    } else {
-                        skip_vector = true;
-                    }
-                });
+    public toggle_attack_squares(p: Piece, unmark=false){
+        const attack_squares = p.attack_squares();
+        console.log(attack_squares)
+        Object.keys(attack_squares).forEach(vector_name => {
+            let skip_vector = false;
+            attack_squares[vector_name].forEach(s => {
+                if (skip_vector) return;
+                let dn = xy_to_dn(s);
+                if(isError(dn)) {
+                    return;
+                };
+                let square = this.get(dn);
+                if (!isPiece(square)) square.mark_or_unmark({"unmark": unmark});
+                else if(p.vector_type == SLIDE) skip_vector = true;
             });
-        }
-    
-        if (vector_type === JUMP) {
-            const a_s = attack_squares as DN[];
-            a_s.forEach(s => {
-                if (s === null) return;
-                let square = this.get(s);
-                if (square instanceof Empty) {
-                    square.mark_square();
-                }
-            });
-        }
+        });
     }
 
-    private _side(colour: COLOUR): { [key: string]: Piece | Piece[] } {
+    private _side(colour: COLOUR): { [key: string]: Piece | ReadonlyArray<Piece> } {
         return {
             ROOK_L: new Rook(colour),
             KNIGHT_L: new Piece(PieceNames.KNIGHT, colour),
@@ -133,7 +142,7 @@ class Grid {
             BISHOP_R: new Bishop(colour),
             KNIGHT_R: new Piece(PieceNames.KNIGHT, colour),
             ROOK_R: new Rook(colour),
-            PAWNS: Array.from({ length: 8 }, _ => new Pawn(colour))
+            PAWNS:(( () => {return Array.from({ length: 8 }, _ => new Pawn(colour))})() as ReadonlyArray<Pawn>)
         };
 
     }
@@ -149,6 +158,7 @@ function main() {
         test_input.forEach((input, i) => {
             console.log(`input: ${input}`)
             let result = dn_to_xy_arr(input);
+            if(isError(result)) throw new Error(result.message)
             let _expect = expect[i];
             console.log(result, _expect);
             console.log(result[0] == _expect[0], result[1] == _expect[1]);
@@ -177,7 +187,7 @@ function main2() {
     const rook = (g.WHITE_SIDE.ROOK_L as Rook);
     const bishop = (g.WHITE_SIDE.BISHOP_L as Bishop);
     g.move_piece(bishop, "d5" as DN);
-    g.mark_attack_squares(bishop.attack_squares(), bishop.vector_type);
+    g.toggle_attack_squares(bishop);
     // g.move_piece(p, "b3" as DN);
     // g.show_board();
 
