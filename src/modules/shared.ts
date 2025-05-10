@@ -29,6 +29,16 @@ type PieceType = typeof PieceNames[keyof typeof PieceNames];
 const BLACK = "black" as const;
 const WHITE = "white" as const;
 type COLOUR = typeof BLACK | typeof WHITE;
+function isBlack(colour: COLOUR): colour is typeof BLACK {
+    return colour == BLACK;
+}
+function isWhite(colour: COLOUR): colour is typeof WHITE {
+    return colour == BLACK;
+}
+
+function identify<Type>(arg: unknown, field: string): arg is Type {
+    return (arg as any)[field] !== undefined;
+}
 
 const JUMP = "jump" as const;
 const SLIDE = "slide" as const;
@@ -49,4 +59,5 @@ export {
     WHITE,
     JUMP,
     SLIDE,
+    identify
 };

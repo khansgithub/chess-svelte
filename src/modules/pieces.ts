@@ -1,5 +1,5 @@
-import { SLIDE, JUMP, WHITE, PieceNames, type PieceType, type COLOUR, type VECTOR_TYPE, type DN, type XY } from './shared.ts';
-import {xy_to_dn} from './grid_util.ts'
+import { SLIDE, JUMP, WHITE, PieceNames, type PieceType, type COLOUR, type VECTOR_TYPE, type DN, type XY } from './shared';
+import {xy_to_dn} from './grid_util'
 
 class Piece {
     public piece_type: PieceType = PieceNames.PAWN;
