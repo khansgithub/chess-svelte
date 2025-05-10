@@ -22,22 +22,44 @@
             return (f as Piece).piece_type !== undefined;
         }
 
-        if (!identify<Piece>(square, "piece_type")) return ""
+        if (!identify<Piece>(square, "piece_type")) return "";
         return square.piece_type.name;
         // console.log(piece_name);
         // return piece_name;
+    }
+
+    function foo(x: number, y: number) {
+        let r = "";
+        if (x % 2) {
+            if (y % 2) {
+                r = "black";
+            } else {
+                r = "white";
+            }
+        } else {
+            if (y - (1 % 2)) {
+                r = "black";
+            } else {
+                r = "white";
+            }
+        }
+        console.log(x, y, ": ", "x mod: ", x % 2, "y mod :", y % 2);
+        console.log(r);
+        return r; 
     }
 
     log(grid_keys);
 </script>
 
 <div class="board">
-    {#each grid_keys as xy, i}
-        <!-- this is so dumb. it works but idk why i just did it on intuition ((Math.floor(i/8) % 2) + i) % 2-->
-        <div class="cell {(i ^ (i >> 3)) & 1 ? 'white' : 'black'}-cell" id={xy}>
-            <p>{get_piece_type(xy)}</p>
-            <p>{xy}</p>
-        </div>
+    {#each Array(8) as _, x}
+        {#each Array(8) as _, y}
+            <!-- <div class="cell {(i ^ (i >> 3)) & 1 ? 'white' : 'black'}-cell" id={xy}> -->
+            <div class="cell {foo(x, y)}-cell">
+                <p>{x}, {y}</p>
+                <!-- {g.get(xy_to_dn(`${y + 1},${8 - x}` as XY) as DN)} -->
+            </div>
+        {/each}
     {/each}
 </div>
 
