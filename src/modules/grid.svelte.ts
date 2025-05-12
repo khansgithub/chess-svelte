@@ -116,7 +116,6 @@ class Grid {
 
     public toggle_attack_squares(p: Piece, unmark=false){
         const attack_squares = p.attack_squares();
-        console.log(attack_squares)
         Object.keys(attack_squares).forEach(vector_name => {
             let skip_vector = false;
             attack_squares[vector_name].forEach(s => {

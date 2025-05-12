@@ -1,4 +1,4 @@
-import { SLIDE, JUMP, WHITE, PieceNames, type PieceType, type COLOUR, type VECTOR_TYPE, type DN, type XY, BLACK } from './shared';
+import { SLIDE, JUMP, WHITE, PieceData, PieceNames, type PieceType, type COLOUR, type VECTOR_TYPE, type DN, type XY, BLACK } from './shared';
 import {xy_to_dn} from './grid_util'
 
 class Piece {
@@ -19,7 +19,7 @@ class Piece {
     }
 
     public toString(): string {
-        const r = `${this.piece_type.short}`;
+        const r = `${PieceData[this.piece_type].short}`;
         return this.colour == WHITE ? r.toUpperCase() : r.toLowerCase();
     }
 }

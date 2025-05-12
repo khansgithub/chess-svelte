@@ -1,34 +1,22 @@
-const PieceNames = {
-    KING: {
-        name: "king",
-        short: "K"
-    },
-    QUEEN: {
-        name: "queen",
-        short: "Q"
-    },
-    ROOK: {
-        name: "rook",
-        short: "R"
-    },
-    BISHOP: {
-        name: "bishop",
-        short: "B"
-    },
-    KNIGHT: {
-        name: "knight",
-        short: "N"
-    },
-    PAWN: {
-        name: "pawn",
-        short: "P"
-    }
+import { PAWN_SVG } from "./svg";
+
+const createPiece = <N extends string, S extends string, SVG extends string>(name: N, short: S, svg: SVG) => ({ name, short, svg }) as const;
+
+const PieceData = {
+    KING: createPiece("king", "K", ""),
+    QUEEN: createPiece("queen", "Q", ""),
+    ROOK: createPiece("rook", "R", ""),
+    BISHOP: createPiece("bishop", "B", ""),
+    KNIGHT: createPiece("knight", "N", ""),
+    PAWN: createPiece("pawn", "P", PAWN_SVG)
 } as const;
-type PieceType = typeof PieceNames[keyof typeof PieceNames];
+type PieceType = keyof typeof PieceData;
+const PieceNames = Object.fromEntries(Object.keys(PieceData).map(k => [k, `${k}`])) as {[K in PieceType]: PieceType};
 
 const BLACK = "black" as const;
 const WHITE = "white" as const;
 type COLOUR = typeof BLACK | typeof WHITE;
+
 function isBlack(colour: COLOUR): colour is typeof BLACK {
     return colour == BLACK;
 }
@@ -55,9 +43,12 @@ export {
     type DN,
     type XY,
     PieceNames,
+    PieceData,
     BLACK,
     WHITE,
     JUMP,
     SLIDE,
-    identify
+    identify,
+    isWhite,
+    isBlack
 };
