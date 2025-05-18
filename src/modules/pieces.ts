@@ -25,8 +25,8 @@ class Piece {
 }
 
 class Pawn extends Piece {
-    constructor(color: COLOUR) {
-        super(PieceNames.PAWN, color);
+    constructor(colour: COLOUR) {
+        super(PieceNames.PAWN, colour);
         this.vector_type = JUMP;
     }
 
@@ -37,11 +37,11 @@ class Pawn extends Piece {
         let [x, y]: number[] = this.position.split(",").map(s => parseInt(s));
         if(this.colour == BLACK) y -= 2; // invert for black piece
         let attack_squares = [
-            `${x + 1},${y + 1}` as XY,
-            `${x - 1},${y + 1}` as XY,
+            `${x + 1},${y + 1}`,
+            `${x - 1},${y + 1}`,
         ];
         return {
-            "": attack_squares.filter(x => !!x) as XY[]
+            "": attack_squares as XY[]
         }
     }
 }
@@ -156,7 +156,30 @@ class Bishop extends Piece{
     }
 }
 
-class Knight extends Piece{}
+class Knight extends Piece{
+    constructor(colour: COLOUR){
+        super(PieceNames.KNIGHT, colour);
+        this.vector_type = JUMP;
+    }
+
+    override attack_squares(): typeof Piece.Vector {
+        let [x, y]: number[] = this.position.split(",").map(s => parseInt(s));
+        let arr = [
+            `${x + 2},${y - 1}`,
+            `${x + 2},${y + 1}`,
+            `${x - 2},${y - 1}`,
+            `${x - 2},${y + 1}`,
+            `${x - 1},${y + 2}`,
+            `${x + 1},${y + 2}`,
+            `${x - 1},${y - 2}`,
+            `${x + 1},${y - 2}`,
+        ]
+        return {
+            "": arr as XY[]
+            // "": arr.filter(x => !!x) as XY[]
+        }
+    }
+}
 
 function isPiece(foo: unknown): foo is Piece {
     return (foo as Piece).piece_type !== undefined;
@@ -166,5 +189,6 @@ export {
     Pawn,
     Rook,
     Bishop,
+    Knight,
     isPiece
 };

@@ -11,7 +11,7 @@ function letter_to_x(letter: string): number | UtilError {
 }
 
 function dn_to_xy_arr(dn: DN): [number, number] | UtilError {
-    let dn_arr: string[] = dn.split("");
+    let dn_arr: string[] = (dn as string).split("");
     if (dn_arr.length != 2) return return_error(`dn=${dn} is an invalid value`)
 
     let x = letter_to_x(dn_arr[0]);

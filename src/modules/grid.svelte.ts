@@ -1,5 +1,5 @@
 import { SLIDE, JUMP, WHITE, BLACK, PieceNames, type COLOUR, type VECTOR_TYPE, type DN, type XY } from './shared';
-import { Piece, Rook, Pawn, Bishop, isPiece } from './pieces';
+import { Piece, Rook, Pawn, Bishop, Knight, isPiece } from './pieces';
 import { xy_to_dn, dn_to_xy, dn_to_xy_arr, isError, } from './grid_util';
 class Empty {
     // private _mark: boolean = false;
@@ -32,10 +32,16 @@ class Empty {
 
 class Grid {
     private _grid = new Map<XY, Piece | Empty>();
+    public reactive_board: {[key: string]: string} = $state({});
 
     public WHITE_SIDE = this._side(WHITE);
     public BLACK_SIDE = this._side(BLACK);
     constructor() {
+        const _set = this._grid.set.bind(this._grid);
+        this._grid.set = (key: XY, value: Empty | Piece): Map<XY, Empty | Piece> => {
+            this.reactive_board[key] = value.toString();
+            return _set(key, value);
+        }
         for (let x = 1; x <= 8; x++) {
             for (let y = 1; y <= 8; y++) {
                 let square: Piece | Empty;
@@ -72,9 +78,6 @@ class Grid {
     public move(notation: string) {
         //TODO
         throw new Error("Not implemented");
-        if (notation.length == 2) {
-            // move pawn
-        }
     }
 
     public get get_grid(): typeof this._grid{
@@ -87,6 +90,10 @@ class Grid {
         let [x, y] = arr;
         if (x === null || y === null) throw new Error(`Invalid move: ${pos}, ${[x, y]}`);
         let new_pos: XY = `${x},${y}` as XY;
+
+        let current_square = this.get(pos);
+        if (isPiece(current_square)) return;
+
         this._grid.set(p.position, new Empty());
         this._grid.set(new_pos, p);
         p.position = new_pos;
@@ -134,12 +141,12 @@ class Grid {
     private _side(colour: COLOUR): { [key: string]: Piece | ReadonlyArray<Piece> } {
         return {
             ROOK_L: new Rook(colour),
-            KNIGHT_L: new Piece(PieceNames.KNIGHT, colour),
+            KNIGHT_L: new Knight(colour),
             BISHOP_L: new Bishop(colour),
             QUEEN: new Piece(PieceNames.QUEEN, colour),
             KING: new Piece(PieceNames.KING, colour),
             BISHOP_R: new Bishop(colour),
-            KNIGHT_R: new Piece(PieceNames.KNIGHT, colour),
+            KNIGHT_R: new Knight(colour),
             ROOK_R: new Rook(colour),
             PAWNS:(( () => {return Array.from({ length: 8 }, _ => new Pawn(colour))})() as ReadonlyArray<Pawn>)
         };
