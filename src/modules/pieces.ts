@@ -1,5 +1,5 @@
 import { SLIDE, JUMP, WHITE, PieceData, PieceNames, type PieceType, type COLOUR, type VECTOR_TYPE, type DN, type XY, BLACK } from './shared';
-import {xy_to_dn} from './grid_util'
+import { xy_to_dn } from './grid_util'
 
 class Piece {
     public piece_type: PieceType = PieceNames.PAWN;
@@ -35,7 +35,7 @@ class Pawn extends Piece {
         // y + 1
         // d2 -> e3, c3
         let [x, y]: number[] = this.position.split(",").map(s => parseInt(s));
-        if(this.colour == BLACK) y -= 2; // invert for black piece
+        if (this.colour == BLACK) y -= 2; // invert for black piece
         let attack_squares = [
             `${x + 1},${y + 1}`,
             `${x - 1},${y + 1}`,
@@ -46,21 +46,21 @@ class Pawn extends Piece {
     }
 }
 
-namespace Rook{
+namespace Rook {
     export type Vector = {
         forward: Array<XY>,
         backward: Array<XY>,
         left: Array<XY>,
         right: Array<XY>,
-    }& typeof Piece.Vector;
+    } & typeof Piece.Vector;
 }
 
 class Rook extends Piece {
     private _cls = Rook;
     static Vector: Rook.Vector;
     private Vector = this._cls.Vector;
-    
-    private new_vector(): typeof this.Vector{
+
+    private new_vector(): typeof this.Vector {
         return {
             forward: new Array<XY>,
             backward: new Array<XY>,
@@ -68,7 +68,7 @@ class Rook extends Piece {
             right: new Array<XY>,
         };
     }
-    
+
     constructor(colour: COLOUR) {
         super(PieceNames.ROOK, colour);
         this.vector_type = SLIDE;
@@ -77,7 +77,7 @@ class Rook extends Piece {
     override attack_squares(): typeof this.Vector {
         // d4   -> d[1...8]
         //      -> [a...h]4
-        const vector =  this.new_vector();
+        const vector = this.new_vector();
         let [this_x, this_y]: number[] = this.position.split(",").map(x => parseInt(x));
 
         [...Array(8).keys()].map(k => k + 1).forEach(i => {
@@ -93,7 +93,7 @@ class Rook extends Piece {
     }
 }
 
-namespace Bishop{
+namespace Bishop {
     export type Vector = {
         ne: Array<XY>,
         se: Array<XY>,
@@ -102,12 +102,12 @@ namespace Bishop{
     } & typeof Piece.Vector;
 }
 
-class Bishop extends Piece{
+class Bishop extends Piece {
     private _cls = Bishop;
     static Vector: Bishop.Vector;
     private vector = this._cls.Vector;
-    
-    private new_vector(): typeof this.vector{
+
+    private new_vector(): typeof this.vector {
         return {
             ne: Array<XY>(),
             se: Array<XY>(),
@@ -130,24 +130,19 @@ class Bishop extends Piece{
         //             - (x - 1, y - 1)
         //          -> c4
         //             - (x + 1, y - 1)
-        const vector =  this.new_vector();
+        const vector = this.new_vector();
         const [this_x, this_y]: number[] = this.position.split(",").map(x => parseInt(x));
 
-        function in_bounds(x: number, y: number): XY | null{
-            if (1 > x || x > 8) return null;
-            if (1 > y || y > 8) return null;
-            return `${x},${y}` as XY;
-        }
 
         [...Array(8).keys()].map(k => k + 1).forEach(i => {
-            let values: {[key: string]: [number, number]} = {
+            let values: { [key: string]: [number, number] } = {
                 ne: [this_x + i, this_y + i],
                 se: [this_x - i, this_y + i],
                 sw: [this_x - i, this_y - i],
                 nw: [this_x + i, this_y - i],
             };
 
-            Object.keys(vector).forEach( vector_names => {
+            Object.keys(vector).forEach(vector_names => {
                 const in_bound_value: XY | null = in_bounds(...values[vector_names]);
                 if (in_bound_value) vector[vector_names].push(in_bound_value);
             });
@@ -156,29 +151,159 @@ class Bishop extends Piece{
     }
 }
 
-class Knight extends Piece{
-    constructor(colour: COLOUR){
+class Knight extends Piece {
+    constructor(colour: COLOUR) {
         super(PieceNames.KNIGHT, colour);
         this.vector_type = JUMP;
     }
 
     override attack_squares(): typeof Piece.Vector {
         let [x, y]: number[] = this.position.split(",").map(s => parseInt(s));
-        let arr = [
-            `${x + 2},${y - 1}`,
-            `${x + 2},${y + 1}`,
-            `${x - 2},${y - 1}`,
-            `${x - 2},${y + 1}`,
-            `${x - 1},${y + 2}`,
-            `${x + 1},${y + 2}`,
-            `${x - 1},${y - 2}`,
-            `${x + 1},${y - 2}`,
-        ]
+               
+        let arr: [number, number][] = [
+            [x + 2, y - 1],
+            [x + 2, y + 1],
+            [x - 2, y - 1],
+            [x - 2, y + 1],
+            [x - 1, y + 2],
+            [x + 1, y + 2],
+            [x - 1, y - 2],
+            [x + 1, y - 2],
+        ];
+
         return {
-            "": arr as XY[]
+            "": arr.flatMap((v) => in_bounds(...v)).filter(x => !!x) as XY[]
             // "": arr.filter(x => !!x) as XY[]
         }
     }
+}
+
+namespace Queen {
+    export type Vector = {
+        n: Array<XY>,
+        ne: Array<XY>,
+        e: Array<XY>,
+        se: Array<XY>,
+        s: Array<XY>,
+        sw: Array<XY>,
+        w: Array<XY>,
+        nw: Array<XY>,
+    } & typeof Piece.Vector;
+}
+
+class Queen extends Piece {
+    private _cls = Queen;
+    static Vector: Queen.Vector;
+    private vector = this._cls.Vector;
+
+    private new_vector(): typeof this.vector {
+        return {
+            n: Array<XY>(),
+            ne: Array<XY>(),
+            e: Array<XY>(),
+            se: Array<XY>(),
+            s: Array<XY>(),
+            sw: Array<XY>(),
+            w: Array<XY>(),
+            nw: Array<XY>(),
+        };
+    }
+
+    constructor(colour: COLOUR) {
+        super(PieceNames.QUEEN, colour);
+        this.vector_type = SLIDE;
+    }
+
+    override attack_squares(): typeof this.vector {
+        const vector = this.new_vector();
+        const [this_x, this_y]: number[] = this.position.split(",").map(x => parseInt(x));
+
+        [...Array(8).keys()].map(k => k + 1).forEach(i => {
+            let values: { [key: string]: [number, number] } = {
+                n: [this_x, this_y + i],
+                ne: [this_x + i, this_y + i],
+                e: [this_x + i, this_y],
+                se: [this_x + i, this_y - i],
+                s: [this_x, this_y - i],
+                sw: [this_x - i, this_y - i],
+                w: [this_x - i, this_y],
+                nw: [this_x - i, this_y + i],
+            };
+
+            Object.keys(vector).forEach(vector_names => {
+                const in_bound_value: XY | null = in_bounds(...values[vector_names]);
+                if (in_bound_value) vector[vector_names].push(in_bound_value);
+            });
+        });
+        return vector;
+    }
+}
+
+namespace King {
+    export type Vector = {
+        n: Array<XY>,
+        ne: Array<XY>,
+        e: Array<XY>,
+        se: Array<XY>,
+        s: Array<XY>,
+        sw: Array<XY>,
+        w: Array<XY>,
+        nw: Array<XY>,
+    } & typeof Piece.Vector;
+}
+
+class King extends Piece {
+    private _cls = King;
+    static Vector: King.Vector;
+    private vector = this._cls.Vector;
+
+    private new_vector(): typeof this.vector {
+        return {
+            n: Array<XY>(),
+            ne: Array<XY>(),
+            e: Array<XY>(),
+            se: Array<XY>(),
+            s: Array<XY>(),
+            sw: Array<XY>(),
+            w: Array<XY>(),
+            nw: Array<XY>(),
+        };
+    }
+
+    constructor(colour: COLOUR) {
+        super(PieceNames.KING, colour);
+        this.vector_type = SLIDE;
+    }
+
+    override attack_squares(): typeof this.vector {
+        const vector = this.new_vector();
+        const [this_x, this_y]: number[] = this.position.split(",").map(x => parseInt(x));
+
+        let i = 1;
+        let values: { [key: string]: [number, number] } = {
+            n: [this_x, this_y + i],
+            ne: [this_x + i, this_y + i],
+            e: [this_x + i, this_y],
+            se: [this_x + i, this_y - i],
+            s: [this_x, this_y - i],
+            sw: [this_x - i, this_y - i],
+            w: [this_x - i, this_y],
+            nw: [this_x - i, this_y + i],
+        };
+
+        Object.keys(vector).forEach(vector_names => {
+            const in_bound_value: XY | null = in_bounds(...values[vector_names]);
+            if (in_bound_value) vector[vector_names].push(in_bound_value);
+        });
+
+        return vector;
+    }
+}
+
+function in_bounds(x: number, y: number): XY | null {
+    if (1 > x || x > 8) return null;
+    if (1 > y || y > 8) return null;
+    return `${x},${y}` as XY;
 }
 
 function isPiece(foo: unknown): foo is Piece {
@@ -190,5 +315,7 @@ export {
     Rook,
     Bishop,
     Knight,
+    Queen,
+    King,
     isPiece
 };

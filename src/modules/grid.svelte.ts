@@ -1,32 +1,44 @@
 import { SLIDE, JUMP, WHITE, BLACK, PieceNames, type COLOUR, type VECTOR_TYPE, type DN, type XY } from './shared';
-import { Piece, Rook, Pawn, Bishop, Knight, isPiece } from './pieces';
+import { Piece, Rook, Pawn, Bishop, Knight, isPiece, Queen, King } from './pieces';
 import { xy_to_dn, dn_to_xy, dn_to_xy_arr, isError, } from './grid_util';
 class Empty {
     // private _mark: boolean = false;
-    public _mark = $state(false);
     public mark_count = $state(0);
-    
-    public mark_or_unmark(args:{mark?: boolean, unmark?: boolean}){
+    public player_mark_count = $state(0);
+    public opponent_mark_count = $state(0);
+
+    public mark_or_unmark(colour: COLOUR, args:{mark?: boolean, unmark?: boolean}){
         if (args.mark === undefined && args.unmark === undefined) {
             throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
         }
 
         if (args.unmark === undefined) {
-            return args.mark ? this.mark_square() : this.unmark_square();
+            return args.mark ? this.mark_square(colour) : this.unmark_square(colour);
         }
     
         if (args.mark === undefined) {
-            return args.unmark ? this.unmark_square() : this.mark_square();
+            return args.unmark ? this.unmark_square(colour) : this.mark_square(colour);
         }
         throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
     
     }
-    public mark_square() { this.mark_count++ };
-    public unmark_square() { this.mark_count-- };
+
+    public mark_square(colour: COLOUR) {
+        if(colour == WHITE) this.player_mark_count += 1;
+        else this.opponent_mark_count += 1;
+        this.mark_count++;
+    }
+
+    public unmark_square(colour: COLOUR) { 
+        if(colour == WHITE) this.player_mark_count -= 1;
+        else this.opponent_mark_count -= 1;
+        this.mark_count--;
+    };
+
     public is_marked(): boolean { return this.mark_count > 0; };
 
     public toString(): string {
-        return this._mark ? "X" : " ";
+        return this.mark_count > 0 ? "X" : " ";
     }
 }
 
@@ -132,8 +144,8 @@ class Grid {
                     return;
                 };
                 let square = this.get(dn);
-                if (!isPiece(square)) square.mark_or_unmark({"unmark": unmark});
-                else if(p.vector_type == SLIDE) skip_vector = true;
+                if (!isPiece(square)) square.mark_or_unmark(p.colour, {"unmark": unmark});
+                else if(p.vector_type == SLIDE) skip_vector = false; // todo: change this back to True
             });
         });
     }
@@ -143,8 +155,8 @@ class Grid {
             ROOK_L: new Rook(colour),
             KNIGHT_L: new Knight(colour),
             BISHOP_L: new Bishop(colour),
-            QUEEN: new Piece(PieceNames.QUEEN, colour),
-            KING: new Piece(PieceNames.KING, colour),
+            QUEEN: new Queen(colour),
+            KING: new King(colour),
             BISHOP_R: new Bishop(colour),
             KNIGHT_R: new Knight(colour),
             ROOK_R: new Rook(colour),

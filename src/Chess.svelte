@@ -3,14 +3,14 @@
     import { Empty, Grid } from "./modules/grid.svelte";
     import { dn_to_xy, isError, xy_to_dn } from "./modules/grid_util";
     import { Bishop, isPiece, Pawn, Piece, Rook } from "./modules/pieces";
-    import { type XY, type DN, identify, WHITE, PieceData } from "./modules/shared";
+    import { type XY, type DN, identify, WHITE, PieceData, BLACK } from "./modules/shared";
 
     const DRAG_DELTA = 30;
     const SELECTED_SQUARE = "selected";
     let mouse_is_down = false;
     let mouse_move_listener: (e:MouseEvent)=>void=  $state(()=>{});
     let drag = false;
-    let drag_item: HTMLElement | null;
+    let drag_item: HTMLDivElement | null = null;
     let drag_item_height: number = 0;
     let drag_hover_cell: string | null = null;
     const empty_closure = ()=>{};
@@ -30,11 +30,8 @@
         try{
             if(e instanceof KeyboardEvent) if(!["Enter", " "].includes(e.key)) return;
 
-            const target = e.currentTarget as HTMLElement | null;
-            if (target === null) return;
-
-            const square = target.parentElement;
-            if (square === null) throw new Error(`Can't find square for ${target}`);
+            const square = (e.currentTarget as HTMLElement)?.parentElement;
+            if (!square) throw new Error(`Can't find square for ${e.currentTarget}`);
             
             const dn = xy_to_dn(square.id as XY);
             if(isError(dn)) throw new Error(dn.message);
@@ -64,59 +61,59 @@
     }
 
     function _mouse_move_listener(e: MouseEvent){
-        console.debug("drag_item", drag_item);
+        // console.debug("drag_item", drag_item);
         if (drag && drag_item && mouse_is_down){
             drag_item.style.pointerEvents = "none";
             drag_item.style.height = drag_item_height + "px";
             drag_item.style.position = "absolute";
             drag_item.style.left = e.x - drag_item_height/2 +  "px";
             drag_item.style.top = e.y - drag_item_height/2 + "px";
-            console.debug("moving dom")
+            console.debug("moving dom");
             return
         }
-        if (drag_item  === null) {
+        if (!drag_item) {
             console.error(e.currentTarget);
-            return;
+            return
         }
         if (drag_item.parentElement?.classList.contains(SELECTED_SQUARE)) return
-        console.debug("NOT moving dom")
-        console.log(drag_item.parentElement?.className)
         const delta = e.offsetX > DRAG_DELTA || e.offsetY > DRAG_DELTA;
-        console.debug("delta: ", e.offsetX, e.offsetY )
+        // console.debug("NOT moving dom")
+        // console.debug("delta: ", e.offsetX, e.offsetY )
         if (!delta) return
         drag_item_height = drag_item.getBoundingClientRect().height;
         drag = true;
-        
-        // const box = drag_item.getBoundingClientRect();
-        // const in_bound = e.x > box.left || e.x < box.right || e.y > box.top || e.y < box.bottom;
-        // console.debug("mouse_is_down", mouse_is_down);
-        // console.debug("drag", drag);
-        // console.debug("in_bound", in_bound);
-        // console.debug("delta", delta);
-
-        // let [offset_x, offset_y] = [Math.abs(e_.offsetX), Math.abs(e_.offsetY)];
     }
 
+    /**
+     * mouse_down listener for div.piece
+     * @param e
+     */
     function mouse_down(e: MouseEvent){
         console.debug("onmosuedown");
+        if (!e.currentTarget) return;
         mouse_is_down = true;
+        drag_item = e.currentTarget as HTMLDivElement;
         mouse_move_listener = _mouse_move_listener;
-        drag_item = e.currentTarget as HTMLElement;
     }
 
+    /**
+     * mouse_up listener on window
+     * @param e
+     */
     function mouse_up(e: Event){
-        if (mouse_is_down) mouse_move_listener = empty_closure;
-        if (!drag) return
+        console.debug("mouse up");
+        mouse_move_listener = empty_closure;
+        mouse_is_down = false;
 
-        if (drag_item === null || drag_hover_cell === null){
+        if (!drag_item || !drag_hover_cell || !drag){
             reset_drag();
             return
         }
 
-        let dn = xy_to_dn(drag_item.parentElement?.id as XY);
+        let dn = xy_to_dn(drag_item.parentElement!.id as XY);
         if (isError(dn)) throw new Error(dn.message)
 
-        let piece = g.get(dn)
+        let piece = g.get(dn);
         if (!isPiece(piece)){
             console.error(piece);
             return;
@@ -131,17 +128,23 @@
         
     }
 
-    function mouse_over(e: Event){
-        console.debug("mouse over");
-        if (drag){
-            const square = (e.currentTarget as HTMLElement).id;
-            if (square == drag_item?.parentElement?.id) return // initially the square the piece is on is hovered
-            console.debug("hvoer: ", square);
-            drag_hover_cell = square;
-        }
-        if (!drag) return;
+    /**
+     * mouse_over listener on div.cell
+     * @param e
+     */
+    function mouse_over(e: Event){  
+        // console.log("mouse over", "----------------");
+        if (!mouse_is_down || !e.currentTarget || !drag_item) return
+        
+        const hover_square = e.currentTarget as HTMLElement;
+        if (hover_square.id === drag_item.parentElement!.id) return
+        drag_hover_cell = hover_square.id;
     }
 
+    /**
+     * mouse_over listener on div.cell
+     * @param e
+     */
     function mouse_leave(e: Event){
         if (!drag) return
         drag_hover_cell = null;
@@ -170,12 +173,18 @@
             <!-- {@const square: Piece | Empty = g.get(xy_to_dn(`${coor}${g.reactive_board[coor]}`.slice(0,-1) as XY) as DN)} -->
             {@const square: Piece | Empty = g.get(xy_to_dn(r(coor, g.reactive_board[coor]) as XY) as DN)}
             {@const marked = !isPiece(square) ? square.is_marked() : null}
-            {@const test = g.reactive_board[coor]}
+            {@const empty = square as Empty}
+            {@const piece = isPiece(square) ? (square as Piece) : null}
+            {@const marked_class = marked ? '-marked' : ''}
+            {@const marked_opponent = marked ? empty.player_mark_count == 0 && empty.opponent_mark_count > 0 ? "-opponent": '' : ''}
+            {@const marked_both = marked ? empty.player_mark_count > 0 && empty.opponent_mark_count > 0 ? "-both": '' : ''}
+            {@const cell_colour =  x&1 ^ y&1 ? 'black' : 'white' }
+
             <!-- <p> {">" +  g.get(xy_to_dn(coor as XY) as DN) + test} </p> -->
             <!-- <p> { square }</p> -->
             <!-- onclick={click} -->
             <div
-            class="cell {x&1 ^ y&1 ? 'black' : 'white' }{marked ? '-marked' : null}-cell"
+            class="cell {cell_colour}{marked_class}{marked_opponent}{marked_both}-cell {marked ? piece ? 'foo' : '' : '' }"
             id="{y + 1},{8 - x}"
             onmouseover={mouse_over}
             onmouseleave={mouse_leave}
@@ -183,27 +192,14 @@
             role="none"
             >
                 <!-- <p>{`${y + 1},${8 - x}`}</p> -->
+                <!-- {square.opponent_mark_count}
+                {square.player_mark_count}
+                {square.mark_count}
+                {marked_both} -->
                 {@render piece_snippet(square)}
             </div>
         {/each}
     {/each}
-    <!-- {#each Array(8) as _, x}
-        {#each Array(8) as _, y}
-            {@const square: Piece | Empty = g.get(xy_to_dn(`${y + 1},${8 - x}` as XY) as DN)}
-            {@const marked = !isPiece(square) ? square.is_marked() : null}
-            <div
-            class="cell {x&1 ^ y&1 ? 'black' : 'white' }{marked ? '-marked' : null}-cell"
-            id="{y + 1},{8 - x}"
-            onmouseover={mouse_over}
-            onfocus={null}
-            onclick={click}
-            role="none"
-            >
-                <p>{`${y + 1},${8 - x}`}</p>
-                {@render piece_snippet(square)}
-            </div>
-        {/each}
-    {/each} -->
 </div>
 
 {#snippet piece_snippet(square : Piece | Empty)}
@@ -230,6 +226,7 @@
 <style>
     :root{
         --white-cell: hsl(0, 0%, 83%) ;
+        --marked_opponent: 20;
     }
     .board {
         /* width: 100%; */
@@ -278,18 +275,41 @@
         background-color: hsl(from var(--white-cell) h s 60%);
     }
 
+    .black-marked-opponent-cell{
+        background-color: hsl(from var(--white-cell) calc(h + var(--marked_opponent)) 100% 75%);
+    }
+
     .black-marked-cell{
         background-color: hsl(from var(--white-cell) h 100% 75%);
     }
 
+    .white-marked-opponent-cell{
+        background-color: hsl(from var(--white-cell) calc(h + var(--marked_opponent)) 100% l);
+    }
+
     .white-marked-cell{
         background-color: hsl(from var(--white-cell) h 100% l)
-    }    
+    }
+
+    .white-marked-both-cell{
+        background-color: hsl(from var(--white-cell) calc(h + calc(var(--marked_opponent) * 7 )) 100% l);
+    }
+
+    .black-marked-both-cell{
+        background-color: hsl(from var(--white-cell) calc(h + var(--marked_opponent) * 7) 100% 75%);
+    }
 
     .piece{
         aspect-ratio: 1/1;
         height: 100%;
+        border-radius: 100%;
+        display: flex;
+        justify-content: center;
         /* border: 5px solid green; */
+    }
+
+    .piece p {
+        margin: auto 0 auto 0;
     }
 
     .white-piece {
@@ -300,5 +320,9 @@
     .black-piece {
         background-color: black;
         color: white;
+    }
+
+    .foo{
+        background-color: purple;
     }
 </style>
