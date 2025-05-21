@@ -1,13 +1,16 @@
-import { SLIDE, JUMP, WHITE, BLACK, PieceNames, type COLOUR, type VECTOR_TYPE, type DN, type XY } from './shared';
-import { Piece, Rook, Pawn, Bishop, Knight, isPiece, Queen, King } from './pieces';
-import { xy_to_dn, dn_to_xy, dn_to_xy_arr, isError, } from './grid_util';
+import { dn_to_xy, dn_to_xy_arr, xy_to_dn, } from './grid_util';
+import { Bishop, isPiece, King, Knight, Pawn, Piece, Queen, Rook } from './pieces.svelte';
+import { BLACK, SLIDE, WHITE, type COLOUR, type DN, type XY } from './shared';
+
+type Square = Piece | Empty;
+
 class Empty {
     // private _mark: boolean = false;
     public mark_count = $state(0);
     public player_mark_count = $state(0);
     public opponent_mark_count = $state(0);
 
-    public mark_or_unmark(colour: COLOUR, args:{mark?: boolean, unmark?: boolean}){
+    public mark_or_unmark(colour: COLOUR, args: { mark?: boolean, unmark?: boolean }) {
         if (args.mark === undefined && args.unmark === undefined) {
             throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
         }
@@ -15,22 +18,21 @@ class Empty {
         if (args.unmark === undefined) {
             return args.mark ? this.mark_square(colour) : this.unmark_square(colour);
         }
-    
+
         if (args.mark === undefined) {
             return args.unmark ? this.unmark_square(colour) : this.mark_square(colour);
         }
         throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
-    
     }
 
     public mark_square(colour: COLOUR) {
-        if(colour == WHITE) this.player_mark_count += 1;
+        if (colour == WHITE) this.player_mark_count += 1;
         else this.opponent_mark_count += 1;
         this.mark_count++;
     }
 
-    public unmark_square(colour: COLOUR) { 
-        if(colour == WHITE) this.player_mark_count -= 1;
+    public unmark_square(colour: COLOUR) {
+        if (colour == WHITE) this.player_mark_count -= 1;
         else this.opponent_mark_count -= 1;
         this.mark_count--;
     };
@@ -43,20 +45,21 @@ class Empty {
 }
 
 class Grid {
-    private _grid = new Map<XY, Piece | Empty>();
-    public reactive_board: {[key: string]: string} = $state({});
+    private _grid = new Map<XY, Square>();
+    public reactive_board: { [key: string]: string } = $state({});
 
     public WHITE_SIDE = this._side(WHITE);
     public BLACK_SIDE = this._side(BLACK);
+
     constructor() {
         const _set = this._grid.set.bind(this._grid);
-        this._grid.set = (key: XY, value: Empty | Piece): Map<XY, Empty | Piece> => {
+        this._grid.set = (key: XY, value: Square): Map<XY, Square> => {
             this.reactive_board[key] = value.toString();
             return _set(key, value);
         }
         for (let x = 1; x <= 8; x++) {
             for (let y = 1; y <= 8; y++) {
-                let square: Piece | Empty;
+                let square: Square;
                 let _x = Math.max(x - 1, 0);
                 switch (y) {
                     case 1:
@@ -70,7 +73,7 @@ class Grid {
                     case 7:
                         square = (this.BLACK_SIDE.PAWNS as Piece[])[_x];
                         break;
-    
+
                     case 8:
                         square = this.BLACK_SIDE[Object.keys(this.BLACK_SIDE)[_x]] as Piece;
                         break;
@@ -92,13 +95,12 @@ class Grid {
         throw new Error("Not implemented");
     }
 
-    public get get_grid(): typeof this._grid{
+    public get get_grid(): typeof this._grid {
         return this._grid;
     }
 
     public move_piece(p: Piece, pos: DN) {
         let arr = dn_to_xy_arr(pos);
-        if (isError(arr)) throw new Error(arr.message);
         let [x, y] = arr;
         if (x === null || y === null) throw new Error(`Invalid move: ${pos}, ${[x, y]}`);
         let new_pos: XY = `${x},${y}` as XY;
@@ -125,32 +127,37 @@ class Grid {
         console.log("-------------------------");
     }
 
-    public get(dn: DN): Piece | Empty {
+    public get(dn: DN): Square {
         let xy = dn_to_xy(dn);
-        if(isError(xy)) throw new Error(xy.message);
         let square = this._grid.get(xy);
         if (square === undefined) throw new Error("Invalid square: " + dn);
         return square;
     }
 
-    public toggle_attack_squares(p: Piece, unmark=false){
+    public toggle_attack_squares(p: Piece, unmark = false) {
         const attack_squares = p.attack_squares();
         Object.keys(attack_squares).forEach(vector_name => {
             let skip_vector = false;
             attack_squares[vector_name].forEach(s => {
                 if (skip_vector) return;
                 let dn = xy_to_dn(s);
-                if(isError(dn)) {
-                    return;
-                };
                 let square = this.get(dn);
-                if (!isPiece(square)) square.mark_or_unmark(p.colour, {"unmark": unmark});
-                else if(p.vector_type == SLIDE) skip_vector = false; // todo: change this back to True
+                if (isPiece(square)){
+                    if (square.colour !== p.colour) {
+                        square.is_vulnerable =! square.is_vulnerable;
+                    }
+                    skip_vector = p.vector_type == SLIDE;
+                } else {
+                    square.mark_or_unmark(p.colour, { "unmark": unmark });
+                }
+
+                // if (!isPiece(square)) square.mark_or_unmark(p.colour, { "unmark": unmark });
+                // else if (p.vector_type == SLIDE) skip_vector = false; // todo: change this back to True
             });
         });
     }
 
-    private _side(colour: COLOUR): { [key: string]: Piece | ReadonlyArray<Piece> } {
+    private _side(colour: COLOUR): { [key: string]: Piece | ReadonlyArray<Pawn> } {
         return {
             ROOK_L: new Rook(colour),
             KNIGHT_L: new Knight(colour),
@@ -160,7 +167,7 @@ class Grid {
             BISHOP_R: new Bishop(colour),
             KNIGHT_R: new Knight(colour),
             ROOK_R: new Rook(colour),
-            PAWNS:(( () => {return Array.from({ length: 8 }, _ => new Pawn(colour))})() as ReadonlyArray<Pawn>)
+            PAWNS: ((() => { return Array.from({ length: 8 }, _ => new Pawn(colour)) })() as ReadonlyArray<Pawn>)
         };
 
     }
@@ -176,7 +183,6 @@ function main() {
         test_input.forEach((input, i) => {
             console.log(`input: ${input}`)
             let result = dn_to_xy_arr(input);
-            if(isError(result)) throw new Error(result.message)
             let _expect = expect[i];
             console.log(result, _expect);
             console.log(result[0] == _expect[0], result[1] == _expect[1]);
@@ -218,5 +224,5 @@ function main2() {
 
 export {
     Empty,
-    Grid
+    Grid, type Square
 };

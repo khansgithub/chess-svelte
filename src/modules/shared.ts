@@ -1,15 +1,16 @@
 import { PAWN_SVG } from "./svg";
 
-const createPiece = <N extends string, S extends string, SVG extends string>(name: N, short: S, svg: SVG) => ({ name, short, svg }) as const;
+const createPiece = <N extends string, S extends string, IMG extends string>(name: N, short: S, img: IMG) => ({ name, short, img: img }) as const;
 
 const PieceData = {
-    KING: createPiece("king", "K", ""),
-    QUEEN: createPiece("queen", "Q", ""),
-    ROOK: createPiece("rook", "R", ""),
-    BISHOP: createPiece("bishop", "B", ""),
-    KNIGHT: createPiece("knight", "N", ""),
-    PAWN: createPiece("pawn", "P", PAWN_SVG)
+    KING: createPiece("king", "K", "♔"),
+    QUEEN: createPiece("queen", "Q", "♕"),
+    ROOK: createPiece("rook", "R", "♖"),
+    BISHOP: createPiece("bishop", "B", "♗"),
+    KNIGHT: createPiece("knight", "N", "♘"),
+    PAWN: createPiece("pawn", "P", "♙"),
 } as const;
+
 type PieceType = keyof typeof PieceData;
 const PieceNames = Object.fromEntries(Object.keys(PieceData).map(k => [k, `${k}`])) as {[K in PieceType]: PieceType};
 
@@ -37,18 +38,5 @@ type XY = string & { readonly __brand: unique symbol }
 
 
 export {
-    type PieceType,
-    type COLOUR,
-    type VECTOR_TYPE,
-    type DN,
-    type XY,
-    PieceNames,
-    PieceData,
-    BLACK,
-    WHITE,
-    JUMP,
-    SLIDE,
-    identify,
-    isWhite,
-    isBlack
+    BLACK, identify, isBlack, isWhite, JUMP, PieceData, PieceNames, SLIDE, WHITE, type COLOUR, type DN, type PieceType, type VECTOR_TYPE, type XY
 };

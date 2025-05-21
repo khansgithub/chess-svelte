@@ -7,6 +7,7 @@ class Piece {
     public position: XY = "" as XY;
     public vector_type: VECTOR_TYPE = SLIDE;
     public selected = false;
+    public is_vulnerable = $state(false);
     static Vector: { [key: string]: XY[] };
 
     constructor(type: PieceType = PieceNames.PAWN, colour: COLOUR = WHITE) {
@@ -35,13 +36,13 @@ class Pawn extends Piece {
         // y + 1
         // d2 -> e3, c3
         let [x, y]: number[] = this.position.split(",").map(s => parseInt(s));
-        if (this.colour == BLACK) y -= 2; // invert for black piece
-        let attack_squares = [
-            `${x + 1},${y + 1}`,
-            `${x - 1},${y + 1}`,
+        if (this.colour == BLACK) y -= 2; // invert direction for black piece
+        let arr: [number, number][] = [
+            [x + 1, y + 1],
+            [x - 1, y + 1],
         ];
         return {
-            "": attack_squares as XY[]
+            "": arr.flatMap((v) => in_bounds(...v)).filter(x => !!x) as XY[]
         }
     }
 }
