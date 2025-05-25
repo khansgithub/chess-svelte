@@ -116,7 +116,6 @@
         }
 
         let dn = xy_to_dn(drag_item.parentElement!.id as XY);
-
         let piece = g.get(dn);
         if (!isPiece(piece)) {
             console.error(piece);
@@ -124,9 +123,7 @@
         }
 
         dn = xy_to_dn(drag_hover_cell as XY);
-
         g.move_piece(piece, dn);
-
         reset_drag();
     }
 
