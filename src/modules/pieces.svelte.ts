@@ -308,7 +308,8 @@ function in_bounds(x: number, y: number): XY | null {
 }
 
 function isPiece(foo: unknown): foo is Piece {
-    return (foo as Piece).piece_type !== undefined;
+    if(foo == null || foo == undefined) throw new Error("this typeguard should not be getting null");
+    return (foo as Piece)?.piece_type !== undefined;
 }
 export {
     Piece,
