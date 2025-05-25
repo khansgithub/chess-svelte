@@ -29,7 +29,7 @@
                 onfocus={null}
                 role="none"
             >
-                <!-- <p>{`${y + 1},${8 - x}`}</p> -->
+                <p>{`${y + 1},${8 - x}`}</p>
                 {#if template_data.piece}
                     <div
                         class="piece {template_data.piece.colour}-piece"

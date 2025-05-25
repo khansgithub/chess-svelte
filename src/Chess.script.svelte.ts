@@ -58,6 +58,7 @@ export class ChessComponent {
      * @param e
      */
     public toggle_show_attack_squares = (e: Event) => {
+        console.log("toggle_show_attack_squares", e.currentTarget)
         if (e instanceof KeyboardEvent)
             if (!["Enter", " "].includes(e.key)) return;
 
@@ -81,7 +82,7 @@ export class ChessComponent {
      * @param e
      */
     public _mouse_move_listener = (e: MouseEvent) => {
-        // console.debug("this.drag_item", this.drag_item);
+        console.log("_mouse_move_listener", e.currentTarget)
         if (this.drag && this.drag_item && this.mouse_is_down) {
             this.drag_item.style.pointerEvents = "none";
             this.drag_item.style.height = this.drag_item_height + "px";
@@ -111,8 +112,10 @@ export class ChessComponent {
      * @param e
      */
     public mouse_down = (e: MouseEvent) => {
-        console.debug("onmosuedown");
-        if (!e.currentTarget) return;
+        console.log("mouse down", e.currentTarget)
+        console.log(e.button)
+        console.log(e.currentTarget)
+        if (e.button != 0 || !e.currentTarget) return;
         this.mouse_is_down = true;
         this.drag_item = e.currentTarget as HTMLDivElement;
         this.mouse_move_listener = this._mouse_move_listener;
@@ -123,7 +126,7 @@ export class ChessComponent {
      * @param e
      */
     public mouse_up = (e: Event) => {
-        console.debug("mouse up");
+        console.log("mouse up", e.currentTarget)
         this.mouse_move_listener = this.empty_closure;
         this.mouse_is_down = false;
 
@@ -149,7 +152,7 @@ export class ChessComponent {
      * @param e
      */
     public mouse_over = (e: Event) => {
-        // console.log("mouse over", "----------------");
+        console.log("mouse_over", e.currentTarget)
         if (!this.mouse_is_down || !e.currentTarget || !this.drag_item) return;
 
         const hover_square = e.currentTarget as HTMLElement;
@@ -162,6 +165,7 @@ export class ChessComponent {
      * @param e
      */
     public mouse_leave = (e: Event) => {
+        console.log("mouse_leave", e.currentTarget)
         if (!this.drag) return;
         this.drag_hover_cell = null;
     }
