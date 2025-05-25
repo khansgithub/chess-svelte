@@ -36,7 +36,7 @@ export class ChessComponent {
 
     public onMount() {
         //@ts-ignore
-        window.grid = this.g;
+        window.grid = ChessComponent.get_instance().g;
     }
 
 
