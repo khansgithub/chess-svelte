@@ -32,7 +32,7 @@
                 role="none"
             >
                 <!-- <p>{`${y + 1},${8 - x}`} / {xy_to_dn(`${y + 1},${8 - x}` as XY)}</p> -->
-                 <p>{template_data.empty?.mark_count}</p>
+                <!-- <p>{template_data.empty?.mark_count}</p> -->
                 {#if piece}
                     <div
                         class="piece {piece.colour}-piece"
@@ -46,6 +46,7 @@
                     src="{PieceData[piece.piece_type].img[piece.colour]}"/>
                     <p></p>
                     </div>
+                <p style:bottom=0>{xy_to_dn(`${y + 1},${8 - x}` as XY)}</p>
                 {/if}
             </div>
         {/each}
@@ -95,13 +96,15 @@
         user-select: none; /* Standard syntax */
     }
 
-    .cell > p:first-of-type{
+    .cell > p{
         position: absolute;
-        left: 0;
-        top: 0;
-        background: rgba(255,255,255,0.9);
+        /* left: 0; */
+        /* top: 0; */
+        background: rgba(255,255,255,0.7);
         font-weight: bold;
-        padding: 5px;
+        padding: 0  5px 0 5px;
+        border-radius: 5px;
+        line-height: 1em;
     }
 
     .black-cell {

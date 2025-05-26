@@ -54,9 +54,9 @@ export class ChessComponent {
     public reset_drag = () => {
         if (this.drag_item) {
             this.drag_item.classList.remove(css.DRAGGING);
-            this.drag_item.style.removeProperty("left")
-            this.drag_item.style.removeProperty("top")
-            this.drag_item.style.removeProperty("height")
+            this.drag_item.style.removeProperty("left");
+            this.drag_item.style.removeProperty("top");
+            this.drag_item.style.removeProperty("height");
             // this.drag_item.style.pointerEvents = "auto";
             // this.drag_item.style.height = "100%";
             // this.drag_item.style.position = "static";
