@@ -54,6 +54,9 @@ export class ChessComponent {
     public reset_drag = () => {
         if (this.drag_item) {
             this.drag_item.classList.remove(css.DRAGGING);
+            this.drag_item.style.removeProperty("left")
+            this.drag_item.style.removeProperty("top")
+            this.drag_item.style.removeProperty("height")
             // this.drag_item.style.pointerEvents = "auto";
             // this.drag_item.style.height = "100%";
             // this.drag_item.style.position = "static";
@@ -74,18 +77,19 @@ export class ChessComponent {
         if (e instanceof KeyboardEvent)
             if (!["Enter", " "].includes(e.key)) return;
 
-        const piece_div =  e.currentTarget as HTMLElement;
+        const piece_div =  e.currentTarget as HTMLElement | null;
+        const piece_div_img =  piece_div?.querySelector("img");
         const square = piece_div?.parentElement;
-        if (!square)
+        if (!piece_div || !piece_div_img || !square)
             throw new Error(`Can't find square for ${piece_div}`);
 
         const dn = xy_to_dn(square.id as XY);
         const piece = this.g.get(dn);
         if (!isPiece(piece)) return;
 
-        piece.selected = !piece.selected;
+        piece.selected = !piece_div_img.classList.contains(css.SELECTED);
         this.g.toggle_attack_squares(piece, piece.selected);
-        piece.selected ? piece_div.classList.add(css.SELECTED) : piece_div.classList.remove(css.SELECTED);
+        piece.selected ? piece_div_img.classList.add(css.SELECTED) : piece_div_img.classList.remove(css.SELECTED);
     }
 
     /**

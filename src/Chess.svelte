@@ -22,6 +22,7 @@
     {#each Array(8) as _, x}
         {#each Array(8) as _, y}
             {@const template_data = c.template_functions.template_data(x, y)}
+            {@const piece = template_data.piece}
             <div
                 class={template_data.cell_class}
                 id="{y + 1},{8 - x}"
@@ -32,16 +33,18 @@
             >
                 <!-- <p>{`${y + 1},${8 - x}`} / {xy_to_dn(`${y + 1},${8 - x}` as XY)}</p> -->
                  <p>{template_data.empty?.mark_count}</p>
-                {#if template_data.piece}
+                {#if piece}
                     <div
-                        class="piece {template_data.piece.colour}-piece"
+                        class="piece {piece.colour}-piece"
                         onclick={c.toggle_show_attack_squares}
                         onkeydown={c.toggle_show_attack_squares}
                         onmousedown={c.mouse_down}
                         role="button"
                         tabindex="0"
                     >
-                        <p>{PieceData[template_data.piece.piece_type].img}</p>
+                    <img alt="{`${template_data.piece}`}"
+                    src="{PieceData[piece.piece_type].img[piece.colour]}"/>
+                    <p></p>
                     </div>
                 {/if}
             </div>
@@ -160,12 +163,9 @@
         display: flex;
         justify-content: center;
         transition:
-            box-shadow 0.2s ease,
-            background-color 0.2s ease,
-            border-color 0.2s ease,
-            transform 0.15s cubic-bezier(0.5, 1.5, 0.5, 1);
-        border: 1px solid #252521;
-        box-shadow: inset 0px 0px 2px 1px rgb(0 0 0 / 72%);
+            filter 5s ease;
+        /* border: 1px solid #252521; */
+        /* box-shadow: inset 0px 0px 2px 1px rgb(0 0 0 / 72%); */
         margin: 1vw;
         /* border: 5px solid green; */
     }
@@ -175,26 +175,38 @@
         font-size: clamp(1rem, 10vw, 4rem);
     }
 
+    .piece > img {
+        transition: 0.2s ease;
+    }
+
     .selected {
         /* border-radius: 3px; */
-        box-shadow:
+        /* box-shadow:
             inset 0px 0px 40px 4px white,
-            0px 0px 4px 4px white !important;
-        border-color: white !important;
-        transform: scale(0.97);
-        /* transform: scale(1) !important; */
+            0px 0px 4px 4px white !important; */
+        /* border-color: white !important; */
+        /* transform: scale(0.97); */
+        margin-bottom: 10px;
+        filter:
+            drop-shadow(0 0 2px rgb(255, 255, 255)) 
+            drop-shadow(1px 0 2px white) invert(1)
+            drop-shadow(-1px 0 2px rgb(255, 255, 255)) invert(1)
+            drop-shadow(0 1px 2px rgb(255, 255, 255)) invert(1)
+            drop-shadow(0 -1px 2px white) invert(1) !important;
+
     }
 
     .white-piece {
-        background-color: white;
+        /* background-color: white;
         background-color: var(--chessdotcom-piece-white);
-        color: var(--chessdotcom-piece-black);
+        color: var(--chessdotcom-piece-black); */
     }
 
     .black-piece {
-        background-color: black;
+        /* background-color: black;
         background-color: var(--chessdotcom-piece-black);
-        color: var(--chessdotcom-piece-white);
+        color: var(--chessdotcom-piece-white); */
+        /* margin-top: 10px; */
     }
 
     .vulnerable {
