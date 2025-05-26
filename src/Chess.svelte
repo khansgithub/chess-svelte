@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { PieceData } from "./modules/shared";
+    import { PieceData, type XY } from "./modules/shared";
     import { ChessComponent } from "./Chess.script.svelte";
+    import { xy_to_dn } from "./modules/grid_util";
 
     const c = ChessComponent.get_instance();
     onMount(c.onMount);
@@ -29,7 +30,8 @@
                 onfocus={null}
                 role="none"
             >
-                <p>{`${y + 1},${8 - x}`}</p>
+                <!-- <p>{`${y + 1},${8 - x}`} / {xy_to_dn(`${y + 1},${8 - x}` as XY)}</p> -->
+                 <p>{template_data.empty?.mark_count}</p>
                 {#if template_data.piece}
                     <div
                         class="piece {template_data.piece.colour}-piece"
@@ -70,6 +72,7 @@
     .cell {
         -ms-user-select: none; /* IE 10 and IE 11 */
         -webkit-user-select: none; /* Safari */
+        /* transform: scale(2); */
         /* width: 100%; */
         align-items: center;
         aspect-ratio: 1/1;
@@ -80,13 +83,22 @@
         font-size: clamp(1px, 1rem, 2rem);
         justify-content: center;
         overflow: hidden;
+        position: relative;
         text-align: center;
-        user-select: none; /* Standard syntax */
-        /* transform: scale(2); */
         transition:
             box-shadow 0.15s cubic-bezier(0.5, 1.5, 0.5, 1),
-            transform 0.15s cubic-bezier(0.5, 1.5, 0.5, 1),
+            transform 0.15s cubic-bezier(0.5, 1.5, 0.5, 1),        
             background-color 0.2s ease;
+        user-select: none; /* Standard syntax */
+    }
+
+    .cell > p:first-of-type{
+        position: absolute;
+        left: 0;
+        top: 0;
+        background: rgba(255,255,255,0.9);
+        font-weight: bold;
+        padding: 5px;
     }
 
     .black-cell {
@@ -190,5 +202,11 @@
             from var(--chessdotcom-piece-white)
                 calc(h + var(--marked_opponent) * 14.25) 100% 75%
         );
+    }
+
+    .dragging{
+        pointer-events: none;
+        position: fixed;
+        z-index: 99;
     }
 </style>

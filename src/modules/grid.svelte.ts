@@ -10,19 +10,8 @@ class Empty {
     public player_mark_count = $state(0);
     public opponent_mark_count = $state(0);
 
-    public mark_or_unmark(colour: COLOUR, args: { mark?: boolean, unmark?: boolean }) {
-        if (args.mark === undefined && args.unmark === undefined) {
-            throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
-        }
-
-        if (args.unmark === undefined) {
-            return args.mark ? this.mark_square(colour) : this.unmark_square(colour);
-        }
-
-        if (args.mark === undefined) {
-            return args.unmark ? this.unmark_square(colour) : this.mark_square(colour);
-        }
-        throw new Error(`Invalid mark options: ${JSON.stringify(args)}`);
+    public mark_or_unmark(colour: COLOUR, mark: boolean = false) {
+        mark ? this.mark_square(colour) : this.unmark_square(colour);        
     }
 
     public mark_square(colour: COLOUR) {
@@ -39,6 +28,12 @@ class Empty {
 
     public is_marked(): boolean { return this.mark_count > 0; };
 
+    public reset(){
+        this.mark_count = 0;
+        this.player_mark_count = 0;
+        this.opponent_mark_count = 0;
+    }
+
     public toString(): string {
         return this.mark_count > 0 ? "X" : " ";
     }
@@ -46,6 +41,7 @@ class Empty {
 
 class Grid {
     private _grid = new Map<XY, Square>();
+    private _selected_pieces: Set<Piece> = new Set();
     public reactive_board: { [key: string]: string } = $state({});
 
     public WHITE_SIDE = this._side(WHITE);
@@ -90,27 +86,33 @@ class Grid {
         }
     }
 
-    public move(notation: string) {
-        //TODO
-        throw new Error("Not implemented");
-    }
-
     public get get_grid(): typeof this._grid {
         return this._grid;
     }
 
     public move_piece(p: Piece, pos: DN) {
         let arr = dn_to_xy_arr(pos);
-        let [x, y] = arr;
-        if (x === null || y === null) throw new Error(`Invalid move: ${pos}, ${[x, y]}`);
-        let new_pos: XY = `${x},${y}` as XY;
+        let swap_to: XY = `${arr[0]},${arr[1]}` as XY;
 
-        let current_square = this.get(pos);
-        if (isPiece(current_square)) return;
+        let swap_to_square = this._grid.get(swap_to);
+        if (isPiece(swap_to_square)) return;
+        
+        const _temp_selected_pieces = Array.from(this._selected_pieces);
+        _temp_selected_pieces.forEach(p => {
+            this.toggle_attack_squares(p, false);
+        });
 
-        this._grid.set(p.position, new Empty());
-        this._grid.set(new_pos, p);
-        p.position = new_pos;
+        let temp_empty: Empty = this._grid.get(swap_to) as Empty;
+        let temp_swap_from = p.position;
+        this._grid.set(swap_to, p);
+        p.position = swap_to;
+        this._grid.set(temp_swap_from, temp_empty);
+        temp_empty.reset();
+
+        _temp_selected_pieces.forEach(p => {
+            this.toggle_attack_squares(p, true);
+        });
+
     }
 
     public show_board() {
@@ -134,7 +136,7 @@ class Grid {
         return square;
     }
 
-    public toggle_attack_squares(p: Piece, unmark = false) {
+    public toggle_attack_squares(p: Piece, mark = false) {
         const attack_squares = p.attack_squares();
         Object.keys(attack_squares).forEach(vector_name => {
             let skip_vector = false;
@@ -144,17 +146,15 @@ class Grid {
                 let square = this.get(dn);
                 if (isPiece(square)){
                     if (square.colour !== p.colour) {
-                        square.is_vulnerable =! square.is_vulnerable;
+                        square.is_vulnerable = mark;
                     }
                     skip_vector = p.vector_type == SLIDE;
                 } else {
-                    square.mark_or_unmark(p.colour, { "unmark": unmark });
+                    square.mark_or_unmark(p.colour, mark);
                 }
-
-                // if (!isPiece(square)) square.mark_or_unmark(p.colour, { "unmark": unmark });
-                // else if (p.vector_type == SLIDE) skip_vector = false; // todo: change this back to True
             });
         });
+        mark ? this._selected_pieces.add(p) : this._selected_pieces.delete(p);
     }
 
     private _side(colour: COLOUR): { [key: string]: Piece | ReadonlyArray<Pawn> } {
@@ -226,3 +226,4 @@ export {
     Empty,
     Grid, type Square
 };
+
