@@ -65,7 +65,16 @@ export class ChessComponent {
         this.drag_item = null;
         this.drag_item_height = 0;
         this.drag_hover_cell = null;
+        this.mouse_move_listener = this.empty_closure;
+        this.mouse_is_down = false;
         console.debug("drag resetted");
+    }
+
+    // Event Handlers
+
+    public window_click(e: MouseEvent){
+        e.preventDefault();
+        // console.log(e.button);
     }
 
     /**
@@ -109,7 +118,7 @@ export class ChessComponent {
             console.error(e.currentTarget);
             return;
         }
-        if (this.drag_item.classList.contains(css.SELECTED))
+        if ((this.drag_item.firstChild as HTMLElement)?.classList.contains(css.SELECTED))
             // if (this.drag_item.parentElement?.classList.contains(SELECTED_SQUARE))
             return;
         const delta = e.offsetX > this.DRAG_DELTA || e.offsetY > this.DRAG_DELTA;
@@ -140,23 +149,19 @@ export class ChessComponent {
      */
     public mouse_up = (e: Event) => {
         console.debug("mouse up", e.currentTarget)
-        this.mouse_move_listener = this.empty_closure;
-        this.mouse_is_down = false;
-
-        if (!this.drag_item || !this.drag_hover_cell || !this.drag) {
+        console.log(this.drag)
+        if (this.drag && this.drag_item && this.drag_hover_cell){
+            let dn = xy_to_dn(this.drag_item.parentElement!.id as XY);
+            let piece = this.g.get(dn);
+            if (!isPiece(piece)) {
+                console.error(piece);
+                return;
+            }
+            dn = xy_to_dn(this.drag_hover_cell as XY);
+            this.g.move_piece(piece, dn);
             this.reset_drag();
-            return;
+            return
         }
-
-        let dn = xy_to_dn(this.drag_item.parentElement!.id as XY);
-        let piece = this.g.get(dn);
-        if (!isPiece(piece)) {
-            console.error(piece);
-            return;
-        }
-
-        dn = xy_to_dn(this.drag_hover_cell as XY);
-        this.g.move_piece(piece, dn);
         this.reset_drag();
     }
 

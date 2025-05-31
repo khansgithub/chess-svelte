@@ -8,7 +8,7 @@
     onMount(c.onMount);
 </script>
 
-<svelte:window onmousemove={c.mouse_move_listener} onmouseup={c.mouse_up} />
+<svelte:window onmousemove={c.mouse_move_listener} onmouseup={c.mouse_up} onclick={c.window_click}/>
 <!-- <div
     id="foo"
     style="position: fixed; top: 200px; left: 465px; height: auto; width: auto; background: darkgreen;"
@@ -46,8 +46,8 @@
                     src="{PieceData[piece.piece_type].img[piece.colour]}"/>
                     <p></p>
                     </div>
-                <p style:bottom=0>{xy_to_dn(`${y + 1},${8 - x}` as XY)}</p>
                 {/if}
+                <p style:bottom=0>{xy_to_dn(`${y + 1},${8 - x}` as XY)}</p>
             </div>
         {/each}
     {/each}
@@ -169,7 +169,7 @@
             filter 5s ease;
         /* border: 1px solid #252521; */
         /* box-shadow: inset 0px 0px 2px 1px rgb(0 0 0 / 72%); */
-        margin: 1vw;
+        /* margin: 1vw; */
         /* border: 5px solid green; */
     }
 
@@ -180,6 +180,7 @@
 
     .piece > img {
         transition: 0.2s ease;
+        margin: 1vw;
     }
 
     .selected {

@@ -38,7 +38,7 @@ describe('asd', async () => {
 
     it("should toggle be `selected` when a piece is cliked", async () => {
         const board = render(Chess).container;
-        const piece =get_square(board, "5,2").querySelector(".piece") as HTMLElement;
+        const piece = get_square(board, "5,2").querySelector("img") as HTMLElement;
 
         await fireEvent.click(piece);
         // test that the "selected" class is applied when the piece is clicked on
