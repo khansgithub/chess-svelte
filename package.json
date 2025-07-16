@@ -8,10 +8,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
-    "test": "vitest test\\* && npm run test:unit -- --run",
-    "test:unit": "vitest"
+    "test": "vitest"
   },
   "devDependencies": {
+    "@open-wc/building-rollup": "^3.0.2",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -26,8 +29,11 @@
     "jsdom": "^26.0.0",
     "mocha": "^11.2.2",
     "sinon": "^20.0.0",
-    "svelte": "^5.28.1",
+    "rollup-plugin-svelte": "^7.2.2",
+    "svelte": "^5.36.0",
     "svelte-check": "^4.1.6",
+    "svelte-preprocess": "^6.0.3",
+    "tslib": "^2.8.1",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vitest": "^3.0.0"

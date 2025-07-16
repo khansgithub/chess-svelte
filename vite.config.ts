@@ -10,7 +10,7 @@ export default defineConfig({
 		env:{
 			"STL_SKIP_AUTO_CLEANUP": "true"
 		},
-		workspace: [
+		projects: [
 			{
 				extends: './vite.config.ts',
 				plugins: [svelteTesting()],

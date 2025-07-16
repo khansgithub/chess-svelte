@@ -42,8 +42,11 @@
                         role="button"
                         tabindex="0"
                     >
-                    <img alt="{`${template_data.piece}`}"
-                    src="{PieceData[piece.piece_type].img[piece.colour]}"/>
+                    <img
+                        draggable="false"
+                        alt="{`${template_data.piece}`}"
+                        src="{PieceData[piece.piece_type].img[piece.colour]}"
+                    />
                     <p></p>
                     </div>
                 {/if}

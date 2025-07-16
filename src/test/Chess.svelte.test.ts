@@ -8,12 +8,6 @@ import { ChessComponent } from "../Chess.script.svelte";
 import type { DN } from '../modules/shared';
 import type { Pawn, Piece, Queen } from '../modules/pieces.svelte';
 
-/**
- * have to fucking mount the component every fucking test because of the auto cleanup in testing-library which i can't disable...
- * no clue how the fucking fixture or scoped shit works with vitest
- * this is so fucking frustrating ugh
- */
-
 const board = render(Chess).container;
 describe('asd', async () => {
 
