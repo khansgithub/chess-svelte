@@ -30,9 +30,9 @@ export class ChessComponent {
     public drag = false;
     public drag_item: HTMLDivElement | null = null;
     public drag_item_height: number = 0;
-    public drag_hover_cell: string | null = null;
+    public drag_hover_cell?: HTMLDivElement;
+    // public drag_hover_cell: string | null = null;
     public readonly g: Grid;
-    public readonly template_functions = TemplateFunctions.get_instance();
     readonly empty_closure = () => { };
 
     private constructor(grid: Grid) {
@@ -63,8 +63,7 @@ export class ChessComponent {
         }
         this.drag = false;
         this.drag_item = null;
-        this.drag_item_height = 0;
-        this.drag_hover_cell = null;
+        // this.drag_hover_cell = null;
         this.mouse_move_listener = this.empty_closure;
         this.mouse_is_down = false;
         console.debug("drag resetted");
@@ -107,17 +106,25 @@ export class ChessComponent {
      */
     public _mouse_move_listener = (e: MouseEvent) => {
         console.debug("_mouse_move_listener", e.currentTarget)
-        if (this.drag && this.drag_item && this.mouse_is_down) {
-            this.drag_item.style.height = this.drag_item_height + "px";
-            this.drag_item.style.left = e.x - this.drag_item_height / 2 + "px";
-            this.drag_item.style.top = e.y - this.drag_item_height / 2 + "px";
+
+        //dragging
+        if (this.drag && this.mouse_is_down) {
+            // so if i understand correctly, drag_item MUST be valid if drag is true
+            // shouldn't add a typeguard here because this is a constraint
+            this.drag_item!.style.height = this.drag_item_height + "px";
+            this.drag_item!.style.left = e.x - this.drag_item_height / 2 + "px";
+            this.drag_item!.style.top = e.y - this.drag_item_height / 2 + "px";
             console.debug("moving dom");
             return;
         }
+
+        // unexpected error
         if (!this.drag_item) {
             console.error(e.currentTarget);
             return;
         }
+        
+        // dragging on to ally selected piece
         if ((this.drag_item.firstChild as HTMLElement)?.classList.contains(css.SELECTED))
             // if (this.drag_item.parentElement?.classList.contains(SELECTED_SQUARE))
             return;
@@ -150,14 +157,16 @@ export class ChessComponent {
     public mouse_up = (e: Event) => {
         console.debug("mouse up", e.currentTarget)
         console.log(this.drag)
-        if (this.drag && this.drag_item && this.drag_hover_cell){
+        if (this.drag && this.drag_item && !this.drag_hover_cell!.isEqualNode(this.drag_item)){
+            // add logic to capture enemy piece
+            console.log("Hover elem:", this.drag_hover_cell);
             let dn = xy_to_dn(this.drag_item.parentElement!.id as XY);
             let piece = this.g.get(dn);
             if (!isPiece(piece)) {
                 console.error(piece);
                 return;
             }
-            dn = xy_to_dn(this.drag_hover_cell as XY);
+            dn = xy_to_dn(this.drag_hover_cell!.id as XY);
             this.g.move_piece(piece, dn);
             this.reset_drag();
             return
@@ -172,10 +181,7 @@ export class ChessComponent {
     public mouse_over = (e: Event) => {
         console.debug("mouse_over", e.currentTarget)
         if (!this.mouse_is_down || !e.currentTarget || !this.drag_item) return;
-
-        const hover_square = e.currentTarget as HTMLElement;
-        if (hover_square.id === this.drag_item.parentElement!.id) return;
-        this.drag_hover_cell = hover_square.id;
+        this.drag_hover_cell = e.currentTarget as HTMLDivElement;
     }
 
     /**
@@ -185,7 +191,7 @@ export class ChessComponent {
     public mouse_leave = (e: Event) => {
         console.debug("mouse_leave", e.currentTarget)
         if (!this.drag) return;
-        this.drag_hover_cell = null;
+        this.drag_hover_cell = undefined;
     }
 
     public r(x: any, r: any): typeof x {
@@ -194,33 +200,28 @@ export class ChessComponent {
     }
 }
 
+interface TemplateData {
+    piece: Piece | null,
+    empty: Empty | null,
+    cell_class: string, 
+}
 
-class TemplateFunctions {
-    private static instance: TemplateFunctions;
-    private constructor(){};
-    public static get_instance(): TemplateFunctions {
-        if (this.instance) return this.instance;
-        this.instance = new TemplateFunctions();
-        return this.instance;
-    }
-
-    public template_data (x: number, y: number) {
-        const that = ChessComponent.get_instance();
-        const coor: string = `${y + 1},${8 - x}`;
-        const cell_colour = (x & 1) ^ (y & 1) ?  css.BLACK_SQUARE: css.WHITE_SQUARE;
-        const square: Square = that.g.get(xy_to_dn(that.r(coor, that.g.reactive_board[coor]) as XY) as DN);
-        const piece = isPiece(square) ? square as Piece : null;
-        const empty = !piece ? square as Empty : null;
-        const marked = empty && empty.is_marked();
-        const marked_class = marked ? css.MARKED_SQAURE : "";
-        const marked_opponent = empty && empty.player_mark_count == 0 && empty.opponent_mark_count > 0 ? css.OPPONENT_SQUARE : ""
-        const marked_both = empty && empty.player_mark_count > 0 && empty.opponent_mark_count > 0 ? css.BOTH_MARKED_SQUARE : ""
-        const is_vulnerable = piece?.is_vulnerable ? css.VULNERABLE : '';                          
-        const cell_class = `cell ${cell_colour}${marked_class}${marked_opponent}${marked_both}-cell ${is_vulnerable}`
-        return {
-            piece: piece,
-            cell_class: cell_class,
-            empty: empty
-        }
+export function template_data (x: number, y: number): TemplateData {
+    const that = ChessComponent.get_instance();
+    const coor: string = `${y + 1},${8 - x}`;
+    const cell_colour = (x & 1) ^ (y & 1) ?  css.BLACK_SQUARE: css.WHITE_SQUARE;
+    const square: Square = that.g.get(xy_to_dn(that.r(coor, that.g.reactive_board[coor]) as XY) as DN);
+    const piece = isPiece(square) ? square as Piece : null;
+    const empty = !piece ? square as Empty : null;
+    const marked = empty && empty.is_marked();
+    const marked_class = marked ? css.MARKED_SQAURE : "";
+    const marked_opponent = empty && empty.player_mark_count == 0 && empty.opponent_mark_count > 0 ? css.OPPONENT_SQUARE : ""
+    const marked_both = empty && empty.player_mark_count > 0 && empty.opponent_mark_count > 0 ? css.BOTH_MARKED_SQUARE : ""
+    const is_vulnerable = piece?.is_vulnerable ? css.VULNERABLE : '';                          
+    const cell_class = `cell ${cell_colour}${marked_class}${marked_opponent}${marked_both}-cell ${is_vulnerable}`
+    return {
+        piece: piece,
+        cell_class: cell_class,
+        empty: empty
     }
 }

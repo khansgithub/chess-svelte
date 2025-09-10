@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { PieceData, type XY } from "./modules/shared";
-    import { ChessComponent } from "./Chess.script.svelte";
+    import { ChessComponent, template_data } from "./Chess.script.svelte";
     import { xy_to_dn } from "./modules/grid_util";
 
     const c = ChessComponent.get_instance();
@@ -21,10 +21,10 @@
 <div class="board" style:background-color="black">
     {#each Array(8) as _, x}
         {#each Array(8) as _, y}
-            {@const template_data = c.template_functions.template_data(x, y)}
-            {@const piece = template_data.piece}
+            {@const t = template_data(x, y)}
+            {@const piece = t.piece}
             <div
-                class={template_data.cell_class}
+                class={t.cell_class}
                 id="{y + 1},{8 - x}"
                 onmouseover={c.mouse_over}
                 onmouseleave={c.mouse_leave}
@@ -32,7 +32,7 @@
                 role="none"
             >
                 <!-- <p>{`${y + 1},${8 - x}`} / {xy_to_dn(`${y + 1},${8 - x}` as XY)}</p> -->
-                <!-- <p>{template_data.empty?.mark_count}</p> -->
+                <!-- <p>{t.empty?.mark_count}</p> -->
                 {#if piece}
                     <div
                         class="piece {piece.colour}-piece"
@@ -44,7 +44,7 @@
                     >
                     <img
                         draggable="false"
-                        alt="{`${template_data.piece}`}"
+                        alt="{`${t.piece}`}"
                         src="{PieceData[piece.piece_type].img[piece.colour]}"
                     />
                     <p></p>
@@ -56,7 +56,7 @@
     {/each}
 </div>
 
-<style>
+<style scoped>
     :root {
         --white-cell: hsl(0, 0%, 83%);
         --marked_opponent: 20;
@@ -193,13 +193,13 @@
             0px 0px 4px 4px white !important; */
         /* border-color: white !important; */
         /* transform: scale(0.97); */
-        margin-bottom: 10px;
+        margin-top: 0 !important;
         filter:
-            drop-shadow(0 0 2px rgb(255, 255, 255)) 
-            drop-shadow(1px 0 2px white) invert(1)
-            drop-shadow(-1px 0 2px rgb(255, 255, 255)) invert(1)
-            drop-shadow(0 1px 2px rgb(255, 255, 255)) invert(1)
-            drop-shadow(0 -1px 2px white) invert(1) !important;
+            drop-shadow(0 0 1px red) 
+            drop-shadow(1px 0 1px red) 
+            drop-shadow(-1px 0 1px red)
+            drop-shadow(0 1px 1px red) 
+            drop-shadow(0 -1px 1px red) !important;
 
     }
 
