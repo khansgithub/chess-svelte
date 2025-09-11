@@ -1,22 +1,31 @@
 import { SLIDE, JUMP, WHITE, PieceData, PieceNames, type PieceType, type COLOUR, type VECTOR_TYPE, type DN, type XY, BLACK } from './shared';
-import { xy_to_dn } from './grid_util'
+import { MustBe, xy_to_dn } from './grid_util'
 
-class Piece {
+class Piece extends MustBe{
     public piece_type: PieceType = PieceNames.PAWN;
     public colour: COLOUR = WHITE;
     public position: XY = "" as XY;
     public vector_type: VECTOR_TYPE = SLIDE;
-    public selected = false;
+    private selected = $state(false);
     public is_vulnerable = $state(false);
     static Vector: { [key: string]: XY[] };
 
     constructor(type: PieceType = PieceNames.PAWN, colour: COLOUR = WHITE) {
+        super();
         this.piece_type = type;
         this.colour = colour;
     }
 
     public attack_squares(): typeof Piece.Vector {
         throw new Error("Not implmemented for this generic Piece class");
+    }
+
+    public set_select(s: boolean){
+        this.selected = s;
+    }
+
+    public is_selected(): boolean{
+        return this.selected;
     }
 
     public toString(): string {

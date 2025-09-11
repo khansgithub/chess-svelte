@@ -1,46 +1,12 @@
-import { dn_to_xy, dn_to_xy_arr, xy_to_dn, } from './grid_util';
+import { dn_to_xy, dn_to_xy_arr, MustBe, xy_to_dn, } from './grid_util';
 import { Bishop, isPiece, King, Knight, Pawn, Piece, Queen, Rook } from './pieces.svelte';
 import { BLACK, SLIDE, WHITE, type COLOUR, type DN, type XY } from './shared';
 
 type Square = Piece | Empty;
 
-class Empty {
-    // private _mark: boolean = false;
-    public mark_count = $state(0);
-    public player_mark_count = $state(0);
-    public opponent_mark_count = $state(0);
-
-    public mark_or_unmark(colour: COLOUR, mark: boolean = false) {
-        mark ? this.mark_square(colour) : this.unmark_square(colour);        
-    }
-
-    public mark_square(colour: COLOUR) {
-        if (colour == WHITE) this.player_mark_count += 1;
-        else this.opponent_mark_count += 1;
-        this.mark_count++;
-    }
-
-    public unmark_square(colour: COLOUR) {
-        if (colour == WHITE) this.player_mark_count -= 1;
-        else this.opponent_mark_count -= 1;
-        this.mark_count--;
-    };
-
-    public is_marked(): boolean { return this.mark_count > 0; };
-
-    public reset(){
-        this.mark_count = 0;
-        this.player_mark_count = 0;
-        this.opponent_mark_count = 0;
-    }
-
-    public toString(): string {
-        return this.mark_count > 0 ? "X" : " ";
-    }
-}
-
 class Grid {
-    private _grid = new Map<XY, Square>();
+    private _grid: { [key: XY]: Square } = $state({});
+    // private _grid = new Map<XY, Square>();
     private _selected_pieces: Set<Piece> = new Set();
     public reactive_board: { [key: string]: string } = $state({});
 
@@ -48,11 +14,11 @@ class Grid {
     public BLACK_SIDE = this._side(BLACK);
 
     constructor() {
-        const _set = this._grid.set.bind(this._grid);
-        this._grid.set = (key: XY, value: Square): Map<XY, Square> => {
-            this.reactive_board[key] = value.toString();
-            return _set(key, value);
-        }
+        // const _set = this._grid.set.bind(this._grid);
+        // this._grid.set = (key: XY, value: Square): Map<XY, Square> => {
+        //     this.reactive_board[key] = value.toString();
+        //     return _set(key, value);
+        // }
         for (let x = 1; x <= 8; x++) {
             for (let y = 1; y <= 8; y++) {
                 let square: Square;
@@ -81,7 +47,7 @@ class Grid {
 
                 let coor: XY = `${x},${y}` as XY;
                 if (isPiece(square)) square.position = coor;
-                this._grid.set(coor, square);
+                this._grid[coor] = square;
             }
         }
     }
@@ -94,7 +60,7 @@ class Grid {
         let arr = dn_to_xy_arr(pos);
         let swap_to: XY = `${arr[0]},${arr[1]}` as XY;
 
-        let swap_to_square = this._grid.get(swap_to);
+        let swap_to_square = this._grid[swap_to];
         if (isPiece(swap_to_square)) return;
         
         const _temp_selected_pieces = Array.from(this._selected_pieces);
@@ -102,11 +68,11 @@ class Grid {
             this.toggle_attack_squares(p, false);
         });
 
-        let temp_empty: Empty = this._grid.get(swap_to) as Empty;
+        let temp_empty: Empty = this._grid[swap_to] as Empty;
         let temp_swap_from = p.position;
-        this._grid.set(swap_to, p);
+        this._grid[swap_to] = p;
         p.position = swap_to;
-        this._grid.set(temp_swap_from, temp_empty);
+        this._grid[temp_swap_from] = temp_empty;
         temp_empty.reset();
 
         _temp_selected_pieces.forEach(p => {
@@ -120,7 +86,7 @@ class Grid {
         for (let x = 8; x > 0; x--) {
             let row = "";
             for (let y = 1; y <= 8; y++) {
-                row += this._grid.get(`${y},${x}` as XY);
+                row += this._grid[`${y},${x}` as XY];
                 row += " ";
             }
             console.log(row);
@@ -131,7 +97,7 @@ class Grid {
 
     public get(dn: DN): Square {
         let xy = dn_to_xy(dn);
-        let square = this._grid.get(xy);
+        let square = this._grid[xy];
         if (square === undefined) throw new Error("Invalid square: " + dn);
         return square;
     }
@@ -172,6 +138,41 @@ class Grid {
 
     }
 
+}
+
+class Empty extends MustBe{
+    // private _mark: boolean = false;
+    public mark_count = $state(0);
+    public player_mark_count = $state(0);
+    public opponent_mark_count = $state(0);
+
+    public mark_or_unmark(colour: COLOUR, mark: boolean = false) {
+        mark ? this.mark_square(colour) : this.unmark_square(colour);        
+    }
+
+    public mark_square(colour: COLOUR) {
+        if (colour == WHITE) this.player_mark_count += 1;
+        else this.opponent_mark_count += 1;
+        this.mark_count++;
+    }
+
+    public unmark_square(colour: COLOUR) {
+        if (colour == WHITE) this.player_mark_count -= 1;
+        else this.opponent_mark_count -= 1;
+        this.mark_count--;
+    };
+
+    public is_marked(): boolean { return this.mark_count > 0; };
+
+    public reset(){
+        this.mark_count = 0;
+        this.player_mark_count = 0;
+        this.opponent_mark_count = 0;
+    }
+
+    public toString(): string {
+        return this.mark_count > 0 ? "X" : " ";
+    }
 }
 
 function main() {
@@ -223,7 +224,6 @@ function main2() {
 }
 
 export {
-    Empty,
-    Grid, type Square
+    Grid, type Square, Empty
 };
 

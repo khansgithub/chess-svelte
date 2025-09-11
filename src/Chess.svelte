@@ -12,19 +12,21 @@
         mouse_up,
         toggle_show_attack_squares,
         window_click,
+        click_target,
+        css,
     } from "./Chess.script.svelte";
     import { xy_to_dn } from "./modules/grid_util";
 
     onMount(onMountFunction);
-    $effect( () => {
+    $effect(() => {
         // console.log("foo:drag", drag.state);
         // console.log(drag.state);
     });
 </script>
 
 <svelte:window
-    onmousemove={mouse_move_listener}
-    onmouseup={mouse_up}
+    onmousemove={click_target != null ? mouse_move_listener : null}
+    onmouseup={drag.state ? mouse_up : null}
     onclick={window_click}
 />
 <!-- <div
@@ -36,16 +38,17 @@
         {Object.entries(g.reactive_board)}
      </p>
 </div> -->
-<div class="board" style:background-color="black">
+<div class="{css.BOARD}" style:background-color="black">
     {#each Array(8) as _, x}
         {#each Array(8) as _, y}
             {@const t = template_data(x, y)}
             {@const piece = t.piece}
+            {@const selected = t.piece?.is_selected() ? css.SELECTED : ""}
             <div
                 class={t.cell_class}
                 id="{y + 1},{8 - x}"
-                onmouseover={mouse_over}
-                onmouseleave={mouse_leave}
+                onmouseover={drag.state ? mouse_over : null}
+                onmouseleave={drag.state ? mouse_leave : null}
                 onfocus={null}
                 role="none"
             >
@@ -53,7 +56,7 @@
                 <!-- <p>{t.empty?.mark_count}</p> -->
                 {#if piece}
                     <div
-                        class="piece {piece.colour}-piece"
+                        class="{css.PIECE} {piece.colour}-{css.PIECE}"
                         onclick={toggle_show_attack_squares}
                         onkeydown={toggle_show_attack_squares}
                         onmousedown={mouse_down}
@@ -64,6 +67,7 @@
                             draggable="false"
                             alt={`${t.piece}`}
                             src={PieceData[piece.piece_type].img[piece.colour]}
+                            class="{selected}"
                         />
                         <p></p>
                     </div>
