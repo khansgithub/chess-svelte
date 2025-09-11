@@ -1,14 +1,32 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { PieceData, type XY } from "./modules/shared";
-    import { ChessComponent, template_data } from "./Chess.script.svelte";
+    import {
+        template_data,
+        onMount as onMountFunction,
+        drag,
+        mouse_down,
+        mouse_leave,
+        mouse_move_listener,
+        mouse_over,
+        mouse_up,
+        toggle_show_attack_squares,
+        window_click,
+    } from "./Chess.script.svelte";
     import { xy_to_dn } from "./modules/grid_util";
 
-    const c = ChessComponent.get_instance();
-    onMount(c.onMount);
+    onMount(onMountFunction);
+    $effect( () => {
+        // console.log("foo:drag", drag.state);
+        // console.log(drag.state);
+    });
 </script>
 
-<svelte:window onmousemove={c.mouse_move_listener} onmouseup={c.mouse_up} onclick={c.window_click}/>
+<svelte:window
+    onmousemove={mouse_move_listener}
+    onmouseup={mouse_up}
+    onclick={window_click}
+/>
 <!-- <div
     id="foo"
     style="position: fixed; top: 200px; left: 465px; height: auto; width: auto; background: darkgreen;"
@@ -26,8 +44,8 @@
             <div
                 class={t.cell_class}
                 id="{y + 1},{8 - x}"
-                onmouseover={c.mouse_over}
-                onmouseleave={c.mouse_leave}
+                onmouseover={mouse_over}
+                onmouseleave={mouse_leave}
                 onfocus={null}
                 role="none"
             >
@@ -36,21 +54,21 @@
                 {#if piece}
                     <div
                         class="piece {piece.colour}-piece"
-                        onclick={c.toggle_show_attack_squares}
-                        onkeydown={c.toggle_show_attack_squares}
-                        onmousedown={c.mouse_down}
+                        onclick={toggle_show_attack_squares}
+                        onkeydown={toggle_show_attack_squares}
+                        onmousedown={mouse_down}
                         role="button"
                         tabindex="0"
                     >
-                    <img
-                        draggable="false"
-                        alt="{`${t.piece}`}"
-                        src="{PieceData[piece.piece_type].img[piece.colour]}"
-                    />
-                    <p></p>
+                        <img
+                            draggable="false"
+                            alt={`${t.piece}`}
+                            src={PieceData[piece.piece_type].img[piece.colour]}
+                        />
+                        <p></p>
                     </div>
                 {/if}
-                <p style:bottom=0>{xy_to_dn(`${y + 1},${8 - x}` as XY)}</p>
+                <p style:bottom="0">{xy_to_dn(`${y + 1},${8 - x}` as XY)}</p>
             </div>
         {/each}
     {/each}
@@ -94,18 +112,18 @@
         text-align: center;
         transition:
             box-shadow 0.15s cubic-bezier(0.5, 1.5, 0.5, 1),
-            transform 0.15s cubic-bezier(0.5, 1.5, 0.5, 1),        
+            transform 0.15s cubic-bezier(0.5, 1.5, 0.5, 1),
             background-color 0.2s ease;
         user-select: none; /* Standard syntax */
     }
 
-    .cell > p{
+    .cell > p {
         position: absolute;
         /* left: 0; */
         /* top: 0; */
-        background: rgba(255,255,255,0.7);
+        background: rgba(255, 255, 255, 0.7);
         font-weight: bold;
-        padding: 0  5px 0 5px;
+        padding: 0 5px 0 5px;
         border-radius: 5px;
         line-height: 1em;
     }
@@ -168,8 +186,7 @@
         border-radius: 100%;
         display: flex;
         justify-content: center;
-        transition:
-            filter 5s ease;
+        transition: filter 5s ease;
         /* border: 1px solid #252521; */
         /* box-shadow: inset 0px 0px 2px 1px rgb(0 0 0 / 72%); */
         /* margin: 1vw; */
@@ -194,13 +211,9 @@
         /* border-color: white !important; */
         /* transform: scale(0.97); */
         margin-top: 0 !important;
-        filter:
-            drop-shadow(0 0 1px red) 
-            drop-shadow(1px 0 1px red) 
-            drop-shadow(-1px 0 1px red)
-            drop-shadow(0 1px 1px red) 
+        filter: drop-shadow(0 0 1px red) drop-shadow(1px 0 1px red)
+            drop-shadow(-1px 0 1px red) drop-shadow(0 1px 1px red)
             drop-shadow(0 -1px 1px red) !important;
-
     }
 
     .white-piece {
@@ -223,7 +236,7 @@
         );
     }
 
-    .dragging{
+    .dragging {
         pointer-events: none;
         position: fixed;
         z-index: 99;
