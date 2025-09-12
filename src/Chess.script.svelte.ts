@@ -7,7 +7,7 @@ import {
     Piece,
     Rook,
 } from "./modules/pieces.svelte";
-import { type DN, PieceData, type XY } from "./modules/shared";
+import { BLACK, type DN, PieceData, type XY } from "./modules/shared";
 
 export const css = {
     SELECTED: "selected",
@@ -27,6 +27,8 @@ const DRAG_DELTA = 30;
 
 let drag_item_height: number = 0;
 let drag_hover_cell: HTMLDivElement | null;
+let start_drag_position: [number, number] = [0,0];
+export let capture_hover_cell: Record<string, HTMLDivElement | null> = $state({state:null});
 export let drag = $state({ "state": false });
 export let click_target: HTMLDivElement | null = null;
 
@@ -48,7 +50,9 @@ function reset_drag() {
         // drag_item.style.height = "100%";
         // drag_item.style.position = "static";
     click_target = null;
+    capture_hover_cell.state = null;
     drag.state = false;
+    start_drag_position = [0,0];
     // drag_hover_cell = null;
     console.debug("drag resetted");
 }
@@ -57,7 +61,6 @@ function reset_drag() {
 
 export function window_click(e: MouseEvent) {
     e.preventDefault();
-    // console.log(e.button);
 }
 
 /**
@@ -133,6 +136,7 @@ export function mouse_down(e: MouseEvent) {
     console.debug("mouse down", e.currentTarget)
     if (e.button != 0 || !e.currentTarget) return;
     click_target = e.currentTarget as HTMLDivElement;
+    start_drag_position = [e.x, e.y];
 }
 
 /**
@@ -148,9 +152,10 @@ export function mouse_up(e: Event) {
     if (drag_hover_cell === click_target) {
         reset_drag();
         return
+    } else if(isOpponent(drag_hover_cell!, click_target!)) {
+        // drag_hover_cell
     }
 
-    // console.log("Hover elem:", drag_hover_cell);
     let dn = xy_to_dn(click_target!.parentElement!.id as XY);
     let piece = G.get(dn).mustBe(Piece) as Piece;
     dn = xy_to_dn(drag_hover_cell!.id as XY);
@@ -160,12 +165,21 @@ export function mouse_up(e: Event) {
 
 /**
  * mouse_over listener on div.cell
+ * Invariant: `click_target` must be truthy
  * @param e
  */
 export function mouse_over(e: Event) {
     console.debug("mouse_over", e.currentTarget)
-    if (!e.currentTarget || !click_target) return;
+    if (!click_target) throw new Error("click_target should exist");
+    if (!e.currentTarget) return;
     drag_hover_cell = e.currentTarget as HTMLDivElement;
+    capture_hover_cell.state = null;
+    if (drag_hover_cell.firstElementChild?.tagName.toLowerCase() == "div"){
+        if (isOpponent(drag_hover_cell.firstElementChild as HTMLDivElement, click_target)){
+            console.log("capture hover")
+            capture_hover_cell.state = drag_hover_cell;
+        }
+    }
 }
 
 /**
@@ -189,6 +203,17 @@ function isSelected(piece_div: HTMLDivElement): boolean {
 }
 
 /**
+ * Is the `player` piece a different colour to the `opponent` piece
+ * @param opponent a .piece div
+ * @param player  a different .piece div
+ * @returns boolean
+ */
+function isOpponent(opponent: HTMLDivElement, player: HTMLDivElement): boolean{
+    const r = [opponent, player].map(p => p.classList.contains(`${BLACK}-${css.PIECE}`));
+    return r[0] != r[1];
+}
+
+/**
  *  dummy function to wrap a reactive var with
  * @param x 
  * @param r 
@@ -205,7 +230,6 @@ interface TemplateData {
 }
 
 export function template_data(x: number, y: number): TemplateData {
-    console.log("template");
     const coor: string = `${y + 1},${8 - x}`;
     const cell_colour = (x & 1) ^ (y & 1) ? css.BLACK_SQUARE : css.WHITE_SQUARE;
     const square: Square = G.get(xy_to_dn(coor as XY) as DN);

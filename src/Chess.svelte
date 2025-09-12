@@ -14,6 +14,7 @@
         window_click,
         click_target,
         css,
+        capture_hover_cell,
     } from "./Chess.script.svelte";
     import { xy_to_dn } from "./modules/grid_util";
 
@@ -44,9 +45,11 @@
             {@const t = template_data(x, y)}
             {@const piece = t.piece}
             {@const selected = t.piece?.is_selected() ? css.SELECTED : ""}
+            {@const id = `${y + 1},${8 - x}`}
+            {@const capture_hover = (capture_hover_cell.state?.id == id) ? "capture-hover-cell":""}
             <div
-                class={t.cell_class}
-                id="{y + 1},{8 - x}"
+                class="{t.cell_class} {capture_hover}"
+                id={id}
                 onmouseover={drag.state ? mouse_over : null}
                 onmouseleave={drag.state ? mouse_leave : null}
                 onfocus={null}
@@ -91,11 +94,12 @@
 
     .board {
         /* width: 100%; */
+        height: 95vh;
         aspect-ratio: 1/1;
         background-color: pink;
         display: grid;
         grid-template-columns: repeat(8, 1fr);
-        height: 100%;
+        /* max-height: 20vh; */
     }
 
     .cell {
@@ -182,6 +186,11 @@
             from var(--chessdotcom-board-white)
                 calc(h + calc(var(--marked_opponent) * 7)) 100% l
         );
+    }
+
+    .capture-hover-cell{
+        /* filter:hue-rotate(-95deg) */
+        background: red;
     }
 
     .piece {
