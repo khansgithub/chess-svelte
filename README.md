@@ -2,7 +2,7 @@
 
 # chess-svelte
 
-A chessboad where pieces toggled to show their attack vectors, and to see which pieces can be captured.
+A chessboard where pieces toggled to show their attack vectors, and to see which pieces can be captured.
 
 ---
 
